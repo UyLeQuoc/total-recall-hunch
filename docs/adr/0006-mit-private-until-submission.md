@@ -1,6 +1,6 @@
 # ADR-0006: MIT; the repo stays private until submission, and its history is scanned before it opens
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0007 (the repo opened on Nov 2; MIT and the CI check stand)
 - **Date:** 2026-11-02
 - **Deciders:** Uy
 

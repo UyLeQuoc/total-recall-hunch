@@ -37,8 +37,8 @@ architecture, scope, dependencies or vendors, deploy, workflow, naming and secur
   plus `sui move test` in `packages/move/hunch` when Move changes. Then `git push origin HEAD:main`.
 - Commit messages start with the PRD's requirement IDs, e.g. `[H1·api] Compile a hunch into a rule`.
 - Never:
-  - commit secrets or `.env` values;
+  - commit secrets or `.env` values: the repo is public, so a pushed key is already leaked and must be
+    rotated ([ADR-0007](docs/adr/0007-public-from-nov-2.md));
   - force-push;
-  - deploy, or make the repo public, without the owner's go
-    ([ADR-0006](docs/adr/0006-mit-private-until-submission.md));
+  - deploy without the owner's go;
   - use a real person's wallet or account for tests (use test keys).
