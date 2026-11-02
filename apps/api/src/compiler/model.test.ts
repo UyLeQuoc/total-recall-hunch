@@ -30,4 +30,24 @@ describe("readReply", () => {
   it("gives up on text with no JSON in it", () => {
     expect(readReply("I can't do that.")).toBeUndefined();
   });
+
+  it("shortens a long title instead of dropping the rule", () => {
+    const out = readReply(
+      JSON.stringify({
+        rule: {
+          name: "x".repeat(120),
+          version: 1,
+          scope: { league: ["BTC"], market: "updown_5m" },
+          when: { all: [{ kind: "move", source: "btc", window_min: 5, min_pct: 0.3 }] },
+          then: [{ kind: "pick", side: { direction: "up" }, confidence: { fixed: 0.6 } }],
+          against: "predict",
+          limits: { picks_per_day: 10, until: "2026-11-30" },
+          stage: "practice",
+        },
+      }),
+    );
+    expect(out?.success).toBe(true);
+    if (out?.success && "rule" in out.data)
+      expect(out.data.rule.name.length).toBeLessThanOrEqual(80);
+  });
 });

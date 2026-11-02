@@ -24,7 +24,7 @@ export async function compileHunch(
   return {
     kind: "refused",
     reason: config.apiKey
-      ? "Hunch couldn't compile that one. Name the league (NBA or BTC), the sources and the gap or move, like the examples."
+      ? "Hunch couldn't compile that one. Name what it runs on (NBA, a Senate race or BTC), the sources and the gap or move, like the examples."
       : "No model key is set (OPENROUTER_API_KEY), so only hunches shaped like the examples compile. Try one of them.",
   };
 }

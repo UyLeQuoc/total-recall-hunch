@@ -4,6 +4,7 @@ import { rule } from "./rule.ts";
 
 const SYSTEM = `You compile a forecaster's hunch into a typed rule. Reply with one JSON object and nothing else.
 The hunch may be in any language; write "name", "question" and "refused" in the hunch's language.
+"name" is a short title of at most 60 characters, never the whole hunch.
 
 Reply with exactly one of:
   {"rule": <Rule>}
@@ -87,6 +88,16 @@ async function complete(apiKey: string, model: string, messages: Message[]): Pro
   return completion.choices[0]?.message.content ?? "";
 }
 
+const NAME_MAX = 80;
+
+function shortenName(value: unknown): unknown {
+  if (!value || typeof value !== "object" || !("rule" in value)) return value;
+  const r = value.rule;
+  if (!r || typeof r !== "object" || !("name" in r) || typeof r.name !== "string") return value;
+  if (r.name.length <= NAME_MAX) return value;
+  return { ...value, rule: { ...r, name: `${r.name.slice(0, NAME_MAX - 1).trimEnd()}…` } };
+}
+
 export function readReply(
   text: string,
 ): z.ZodSafeParseResult<z.infer<typeof replySchema>> | undefined {
@@ -94,7 +105,7 @@ export function readReply(
   const end = text.lastIndexOf("}");
   if (start < 0 || end <= start) return undefined;
   try {
-    return replySchema.safeParse(JSON.parse(text.slice(start, end + 1)));
+    return replySchema.safeParse(shortenName(JSON.parse(text.slice(start, end + 1))));
   } catch {
     return undefined;
   }
@@ -113,6 +124,7 @@ export async function compileByModel(
       content: `Today is ${today.toISOString().slice(0, 10)}.\n<hunch>${hunch.replaceAll("<", "‹")}</hunch>`,
     },
   ];
+  let problems = "";
   for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
     const text = await complete(apiKey, model, messages);
     const parsed = readReply(text);
@@ -128,7 +140,7 @@ export async function compileByModel(
       if ("question" in reply) return { kind: "question", question: reply.question };
       return { kind: "refused", reason: reply.refused };
     }
-    const problems = parsed
+    problems = parsed
       ? parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")
       : "the reply wasn't one JSON object";
     messages.push(
@@ -139,5 +151,5 @@ export async function compileByModel(
       },
     );
   }
-  throw new Error("the model's rule didn't match the schema twice");
+  throw new Error(`the model's rule didn't match the schema twice: ${problems}`);
 }
