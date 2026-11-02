@@ -33,7 +33,15 @@ function game(
       kind: "history",
     },
   ];
-  return { id, home: "CLE", away: "OKC", startsAt: lock, winner, snapshots: snaps };
+  return {
+    id,
+    title: "OKC @ CLE",
+    home: "CLE",
+    away: "OKC",
+    startsAt: lock,
+    winner,
+    snapshots: snaps,
+  };
 }
 
 describe("replaySports", () => {

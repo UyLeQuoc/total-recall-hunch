@@ -62,12 +62,25 @@ describe("compileByPattern", () => {
     expect(out?.kind).toBe("question");
   });
 
-  it("says elections aren't in yet instead of guessing", () => {
+  it("compiles the Senate example against Polymarket", () => {
     const out = compileByPattern(
-      "On Senate races, Kalshi is sharper than Polymarket when they split by 5+ points.",
+      "On Senate races, Kalshi is sharper than Polymarket when they split by 2+ points.",
       today,
     );
-    expect(out?.kind).toBe("refused");
+    if (out?.kind !== "rule") throw new Error("expected a rule");
+    expect(rule.safeParse(out.rule).success).toBe(true);
+    expect(out.rule.scope.league).toEqual(["SENATE"]);
+    expect(out.rule.name).toBe("Kalshi beats Polymarket on Senate splits");
+  });
+
+  it("refuses the books on Senate races, and the House for now", () => {
+    expect(
+      compileByPattern("On Senate races, the books beat Kalshi by 3+ points.", today)?.kind,
+    ).toBe("refused");
+    expect(
+      compileByPattern("On House races, Kalshi is sharper than Polymarket by 5+ points.", today)
+        ?.kind,
+    ).toBe("refused");
   });
 
   it("returns nothing for text it has no shape for", () => {

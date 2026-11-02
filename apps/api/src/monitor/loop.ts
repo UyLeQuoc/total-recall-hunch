@@ -3,6 +3,7 @@ import { runAnchorBatch } from "../anchor/batcher.ts";
 import { persistUsage } from "../anchor/meter.ts";
 import { backfillBtc, refreshBtc } from "../ingest/btc.ts";
 import { backfillNba, ingestNba } from "../ingest/nba.ts";
+import { ingestSenate } from "../ingest/senate.ts";
 import { flushMemories } from "../memory/walrus.ts";
 import { rememberNewlyProven } from "../score/proven.ts";
 import { resolveSportsPicks } from "../score/resolve.ts";
@@ -47,6 +48,9 @@ export function startLoops(s: Services): void {
     await backfillBtc(db, log);
     await refreshBtc(db);
   });
-  every("nba", 5 * 60 * SECOND, log, () => ingestNba(db, log));
+  every("nba", 5 * 60 * SECOND, log, () =>
+    ingestNba(db, log, { apiKey: s.env.ODDS_API_KEY, dailyCalls: s.env.ODDS_API_DAILY_CALLS }),
+  );
+  every("senate", 5 * 60 * SECOND, log, () => ingestSenate(db, log));
   every("nba-backfill", 60 * 60 * SECOND, log, () => backfillNba(db, log));
 }

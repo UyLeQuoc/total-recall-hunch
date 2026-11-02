@@ -6,7 +6,7 @@ const NEAR_MAX_AGE_MS = 10 * MINUTE;
 const FAR_MAX_AGE_MS = 60 * MINUTE;
 
 export interface Snapshot {
-  source: MarketSource;
+  source: string;
   homeProb: number;
   at: Date;
   kind: "live" | "close" | "history";
@@ -34,7 +34,7 @@ export function maxAgeMs(now: Date, lock: Date): number {
 
 export function freshPrice(
   snapshots: Snapshot[],
-  source: MarketSource,
+  source: string,
   now: Date,
   lock: Date,
   allowClosingLine: boolean,
@@ -74,8 +74,8 @@ function check(
       return {
         ok,
         why: ok
-          ? `${Math.round(left / MINUTE)} min before tip-off`
-          : `not within ${c.minutes} min of tip-off`,
+          ? `${Math.round(left / MINUTE)} min before lock`
+          : `not within ${c.minutes} min of lock`,
       };
     }
     case "gap": {

@@ -2,23 +2,58 @@ import type { Db } from "../db/client.ts";
 import type { Candle } from "./coinbase.ts";
 import type { EspnGame } from "./espn.ts";
 
-export type Source = "books" | "polymarket" | "kalshi";
+export type Source = "books" | "polymarket" | "kalshi" | `book:${string}`;
 export type SnapshotKind = "live" | "close" | "history";
 
 export function eventId(game: EspnGame): string {
   return `nba:${game.espnId}`;
 }
 
+export interface EventRow {
+  id: string;
+  league: "NBA" | "SENATE";
+  title: string;
+  home: string;
+  away: string;
+  homeName: string;
+  awayName: string;
+  startsAt: Date;
+  status: "pre" | "in" | "post";
+  winner: "home" | "away" | null;
+  homeScore: number | null;
+  awayScore: number | null;
+}
+
+export async function upsertEvent(db: Db, e: EventRow): Promise<void> {
+  await db`
+    insert into events (id, league, title, home, away, home_name, away_name, starts_at, status, winner, home_score, away_score)
+    values (${e.id}, ${e.league}, ${e.title}, ${e.home}, ${e.away}, ${e.homeName}, ${e.awayName},
+            ${e.startsAt}, ${e.status}, ${e.winner}, ${e.homeScore}, ${e.awayScore})
+    on conflict (id) do update set
+      title = excluded.title, home = excluded.home, away = excluded.away,
+      home_name = excluded.home_name, away_name = excluded.away_name,
+      starts_at = excluded.starts_at, status = excluded.status,
+      winner = coalesce(excluded.winner, events.winner),
+      home_score = excluded.home_score, away_score = excluded.away_score, updated_at = now()`;
+}
+
 export async function upsertGame(db: Db, game: EspnGame): Promise<void> {
   const winner =
     game.state === "post" ? (game.home.winner ? "home" : game.away.winner ? "away" : null) : null;
-  await db`
-    insert into events (id, league, home, away, home_name, away_name, starts_at, status, winner, home_score, away_score)
-    values (${eventId(game)}, 'NBA', ${game.home.abbr}, ${game.away.abbr}, ${game.home.name}, ${game.away.name},
-            ${game.startsAt}, ${game.state}, ${winner}, ${game.home.score}, ${game.away.score})
-    on conflict (id) do update set
-      starts_at = excluded.starts_at, status = excluded.status, winner = excluded.winner,
-      home_score = excluded.home_score, away_score = excluded.away_score, updated_at = now()`;
+  await upsertEvent(db, {
+    id: eventId(game),
+    league: "NBA",
+    title: `${game.away.abbr} @ ${game.home.abbr}`,
+    home: game.home.abbr,
+    away: game.away.abbr,
+    homeName: game.home.name,
+    awayName: game.away.name,
+    startsAt: game.startsAt,
+    status: game.state,
+    winner,
+    homeScore: game.home.score,
+    awayScore: game.away.score,
+  });
 }
 
 export async function addSnapshot(

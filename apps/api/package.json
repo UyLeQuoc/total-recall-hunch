@@ -12,6 +12,7 @@
   "dependencies": {
     "@hunch/chain": "workspace:*",
     "@hunch/memory": "workspace:*",
+    "@mysten/deepbook-v3": "2.8.0",
     "@mysten/sui": "^2.33.2",
     "hono": "4.13.13",
     "postgres": "3.4.9",

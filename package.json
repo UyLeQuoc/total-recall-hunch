@@ -17,7 +17,9 @@
     "docs:links": "bun scripts/check-links.ts",
     "secrets:history": "bun scripts/scan-history.ts",
     "anchor:publish": "bun scripts/publish-anchor.ts",
-    "keys:dev": "bun apps/api/src/ops/dev-keys.ts"
+    "keys:dev": "bun apps/api/src/ops/dev-keys.ts",
+    "predict:spike": "bun apps/api/src/ops/predict-spike.ts",
+    "localnet": "bun apps/api/src/ops/localnet.ts"
   },
   "devDependencies": {
     "@bun-security-scanner/osv": "^1.0.0",

@@ -16,8 +16,8 @@ export async function manualPick(
   confidence: number,
   now = new Date(),
 ): Promise<SignedResult | { ok: false; status: 404; reason: string }> {
-  const events = await db<{ home: string; away: string; starts_at: Date }[]>`
-    select home, away, starts_at from events where id = ${eventId}`;
+  const events = await db<{ league: string; home: string; away: string; starts_at: Date }[]>`
+    select league, home, away, starts_at from events where id = ${eventId}`;
   const event = events[0];
   if (!event) return { ok: false, status: 404, reason: "No game has that id." };
   const rows = await db<{ source: MarketSource; home_prob: number; at: Date }[]>`
@@ -39,6 +39,7 @@ export async function manualPick(
     agent,
     {
       address,
+      market: event.league === "SENATE" ? "senate-winner" : "nba-ml",
       ruleId: null,
       version: null,
       eventId,

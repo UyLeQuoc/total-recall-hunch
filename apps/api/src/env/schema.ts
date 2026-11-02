@@ -21,6 +21,9 @@ export const envSchema = z.object({
   MEMWAL_ACCOUNT_ID: z.string().optional(),
   MEMWAL_PRIVATE_KEY: z.string().optional(),
   MEMWAL_SERVER_URL: z.string().url().default("https://relayer.memory.walrus.xyz"),
+  ODDS_API_KEY: z.string().optional(),
+  ODDS_API_DAILY_CALLS: z.coerce.number().int().min(0).default(12),
+  ANCHOR_EVERY_MIN: z.coerce.number().int().min(1).max(60).default(10),
   DAILY_CREDIT_BUDGET: z.coerce.number().int().positive().default(2000),
   INGEST: z.enum(["on", "off"]).default("on"),
 });

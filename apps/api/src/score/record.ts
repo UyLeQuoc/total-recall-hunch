@@ -114,10 +114,11 @@ export async function loadRuleRecord(db: Db, ruleId: string) {
       retracted_at: Date | null;
       home: string | null;
       away: string | null;
+      title: string | null;
       anchored: boolean;
     }[]
   >`select p.id, p.version, p.stage, p.event_id, p.side, p.confidence, p.inputs, p.picked_at, p.expires_at,
-           p.outcome, p.retracted_at, e.home, e.away,
+           p.outcome, p.retracted_at, e.home, e.away, coalesce(e.title, e.away || ' @ ' || e.home) as title,
            exists (select 1 from anchor_leaves l join anchors a on a.id = l.anchor_id
                    where l.pick_id = p.id and a.status = 'anchored') as anchored
     from picks p left join events e on e.id = p.event_id
@@ -158,7 +159,7 @@ export async function loadRuleRecord(db: Db, ruleId: string) {
     version: p.version,
     stage: p.stage,
     eventId: p.event_id,
-    label: p.home && p.away ? `${p.away} @ ${p.home}` : "BTC 5 min",
+    label: p.title ?? "BTC 5 min",
     side: p.home && p.away ? (p.side === "home" ? p.home : p.away) : p.side,
     confidence: p.confidence,
     pickedAt: p.picked_at.toISOString(),

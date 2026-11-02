@@ -53,7 +53,10 @@ const limits = z.object({
 const sportsRule = z.object({
   name: z.string().min(3).max(80),
   version: z.number().int().min(1),
-  scope: z.object({ league: z.tuple([z.literal("NBA")]), market: z.literal("moneyline") }),
+  scope: z.object({
+    league: z.tuple([z.enum(["NBA", "SENATE"])]),
+    market: z.literal("moneyline"),
+  }),
   when: z.object({ all: z.array(condition).min(1).max(6) }),
   then: z.tuple([z.object({ kind: z.literal("pick"), side: sportsSide, confidence })]),
   against: marketSource,

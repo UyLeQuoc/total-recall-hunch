@@ -39,6 +39,7 @@ function str(v: Json | undefined): string {
 export async function checkPick(
   p: LoadedPick,
   read: ((digest: string) => Promise<AnchorRead>) | undefined,
+  unavailable = "no Sui client configured (Tatum key)",
 ): Promise<Check[]> {
   const checks: Check[] = [];
   const lock = new Date(str(p.payload.lock));
@@ -92,7 +93,7 @@ export async function checkPick(
   checks.push({
     name: "Logged before lock",
     ok: beforeLock,
-    detail: `${Math.round((lock.getTime() - at.getTime()) / 60_000)} min before tip-off`,
+    detail: `${Math.round((lock.getTime() - at.getTime()) / 60_000)} min before lock`,
   });
 
   if (!p.anchor || p.position === undefined || p.anchor.status !== "anchored" || !p.anchor.digest) {
@@ -113,11 +114,7 @@ export async function checkPick(
         : "the Merkle proof doesn't reach the anchored root",
     });
     if (!read) {
-      checks.push({
-        name: "The anchor reads back from Sui",
-        ok: null,
-        detail: "no Sui client configured (Tatum key)",
-      });
+      checks.push({ name: "The anchor reads back from Sui", ok: null, detail: unavailable });
     } else {
       const onChain = await read(p.anchor.digest);
       const match =
@@ -229,4 +226,11 @@ export async function cachedRead(
              on conflict (digest) do nothing`;
   }
   return result;
+}
+
+export async function cachedOnly(db: Db, digest: string): Promise<AnchorRead | undefined> {
+  const rows = await db<
+    { result: AnchorRead }[]
+  >`select result from anchor_reads where digest = ${digest}`;
+  return rows[0]?.result;
 }

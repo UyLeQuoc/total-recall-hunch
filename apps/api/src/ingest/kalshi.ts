@@ -79,3 +79,75 @@ export async function fetchHomeHistory(
   }
   return out;
 }
+
+const marketsSchema = z.object({
+  markets: z.array(
+    z.object({
+      ticker: z.string(),
+      yes_sub_title: z.string().optional(),
+      yes_bid_dollars: dollars,
+      yes_ask_dollars: dollars,
+      status: z.string().optional(),
+      result: z.string().optional(),
+    }),
+  ),
+});
+
+export interface KalshiMarket {
+  ticker: string;
+  name: string;
+  mid: number | undefined;
+  result: "yes" | "no" | undefined;
+}
+
+export async function fetchMarkets(tickers: string[]): Promise<Map<string, KalshiMarket>> {
+  const out = new Map<string, KalshiMarket>();
+  for (let i = 0; i < tickers.length; i += 50) {
+    const chunk = tickers.slice(i, i + 50);
+    const data = await getJson(
+      `${BASE}/markets?tickers=${chunk.join(",")}&limit=100`,
+      marketsSchema,
+    );
+    for (const m of data.markets) {
+      out.set(m.ticker, {
+        ticker: m.ticker,
+        name: m.yes_sub_title ?? "",
+        mid: mid(m.yes_bid_dollars, m.yes_ask_dollars),
+        result: m.result === "yes" || m.result === "no" ? m.result : undefined,
+      });
+    }
+  }
+  return out;
+}
+
+export interface SenateRace {
+  state: string;
+  eventTicker: string;
+  dTicker: string;
+  rTicker: string;
+}
+
+export async function discoverSenateRaces(states: string[], year: string): Promise<SenateRace[]> {
+  const races: SenateRace[] = [];
+  for (const state of states) {
+    for (const series of [`SENATE${state}`, `SENATE${state}S`]) {
+      const data = await getJson(
+        `${BASE}/events?series_ticker=${series}&with_nested_markets=true&limit=20`,
+        eventsSchema,
+      );
+      const event = data.events.find((e) => e.event_ticker.endsWith(`-${year}`));
+      const markets = event?.markets ?? [];
+      const d = markets.find((m) => m.ticker.endsWith("-D"));
+      const r = markets.find((m) => m.ticker.endsWith("-R"));
+      if (event && d && r) {
+        races.push({
+          state,
+          eventTicker: event.event_ticker,
+          dTicker: d.ticker,
+          rTicker: r.ticker,
+        });
+      }
+    }
+  }
+  return races;
+}

@@ -12,3 +12,6 @@ NOTES.md
 
 # Move build output
 packages/move/**/build/
+
+# A throwaway Sui localnet (bun run localnet)
+.localnet/

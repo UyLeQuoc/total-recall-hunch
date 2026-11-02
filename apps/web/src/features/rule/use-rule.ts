@@ -19,6 +19,7 @@ const ruleSchema = z.object({
   compiledBy: z.string(),
   card: cardSchema,
   isBtc: z.boolean(),
+  league: z.string(),
   owner: z.string().nullable(),
   mine: z.boolean(),
   paused: z.boolean(),

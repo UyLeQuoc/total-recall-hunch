@@ -13,11 +13,11 @@ import { meter } from "@/lib/ascii/meter";
 import { dayLabel, pct, utcMinute } from "@/lib/format";
 import type { Replay } from "@/lib/rule-schemas";
 import { cn } from "@/lib/utils";
-import { replayFootnotes, replayHeadline, replayVerdict } from "./replay-copy";
+import { type ReplayKind, replayFootnotes, replayHeadline, replayVerdict } from "./replay-copy";
 
 interface ReplayViewProps {
   replay: Replay;
-  isBtc: boolean;
+  kind: ReplayKind;
 }
 
 const AGAINST_LABEL: Record<string, string> = {
@@ -26,7 +26,8 @@ const AGAINST_LABEL: Record<string, string> = {
   kalshi: "kalshi",
 };
 
-export function ReplayView({ replay, isBtc }: ReplayViewProps) {
+export function ReplayView({ replay, kind }: ReplayViewProps) {
+  const isBtc = kind === "btc";
   const progress = useEase(900, replay);
   const today = replay.days.at(-1)?.day ?? "";
   const bars = dayBars(
@@ -45,26 +46,32 @@ export function ReplayView({ replay, isBtc }: ReplayViewProps) {
   return (
     <section className="flex flex-col gap-4 animate-fade-up">
       <p className="text-[15px] leading-[1.9]">
-        <strong className="font-semibold">{replayHeadline(replay, isBtc)}</strong>
+        <strong className="font-semibold">{replayHeadline(replay, kind)}</strong>
         {verdict && <span className="text-ink-2"> {verdict}</span>}
       </p>
-      <div>
-        <div className="mb-1 font-mono text-[11px] text-ink-3">
-          fires per day · <span className="text-foreground">████</span> right{" "}
-          <span className="text-foreground">░░░░</span> wrong
-        </div>
-        <AsciiArt text={bars} label={replayHeadline(replay, isBtc)} />
-      </div>
-      <div>
-        <div className="mb-1 font-mono text-[11px] text-ink-3">brier score · lower is better</div>
-        <AsciiArt text={scores} label="Brier scores" />
-      </div>
+      {replay.fires > 0 && (
+        <>
+          <div>
+            <div className="mb-1 font-mono text-[11px] text-ink-3">
+              fires per day · <span className="text-foreground">████</span> right{" "}
+              <span className="text-foreground">░░░░</span> wrong
+            </div>
+            <AsciiArt text={bars} label={replayHeadline(replay, kind)} />
+          </div>
+          <div>
+            <div className="mb-1 font-mono text-[11px] text-ink-3">
+              brier score · lower is better
+            </div>
+            <AsciiArt text={scores} label="Brier scores" />
+          </div>
+        </>
+      )}
       {replay.recent.length > 0 && (
         <Table className="text-[13px]">
           <TableHeader>
             <TableRow>
               <TableHead>When (UTC)</TableHead>
-              <TableHead>{isBtc ? "Move" : "Game"}</TableHead>
+              <TableHead>{isBtc ? "Move" : kind === "senate" ? "Race" : "Game"}</TableHead>
               <TableHead>Pick</TableHead>
               <TableHead>Result</TableHead>
             </TableRow>
@@ -87,7 +94,7 @@ export function ReplayView({ replay, isBtc }: ReplayViewProps) {
           </TableBody>
         </Table>
       )}
-      {replayFootnotes(replay, isBtc).map((n) => (
+      {replayFootnotes(replay, kind).map((n) => (
         <p key={n} className="text-[12.5px] text-ink-3">
           {n}
         </p>

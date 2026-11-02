@@ -4,7 +4,7 @@ import { loadHealth } from "../ingest/health.ts";
 import { newestLines } from "../memory/queue.ts";
 import { loadPastGames } from "../monitor/history.ts";
 import { currentTrust } from "../score/trust.ts";
-import { learningCurve, sourceObservations, voiceStats } from "../score/voices.ts";
+import { CONTEXT, learningCurve, sourceObservations, voiceStats } from "../score/voices.ts";
 import type { Services } from "../services.ts";
 
 const LEARNING_DAYS = 30;
@@ -13,7 +13,10 @@ export function boardRoutes(s: Services): Hono {
   const app = new Hono();
 
   app.get("/games", async (c) => {
-    const trust = await currentTrust(s.db, s.memory, s.log);
+    const trust = {
+      NBA: await currentTrust(s.db, s.memory, s.log, CONTEXT.NBA),
+      SENATE: await currentTrust(s.db, s.memory, s.log, CONTEXT.SENATE),
+    };
     return c.json({ games: await loadBoard(s.db, trust) });
   });
 

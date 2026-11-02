@@ -20,6 +20,11 @@ const KEYS: { key: keyof Status["keys"]; env: string; unlocks: string }[] = [
     env: "TATUM_API_KEY_TESTNET",
     unlocks: "Sui calls: anchors, verify pages, Predict",
   },
+  {
+    key: "odds",
+    env: "ODDS_API_KEY",
+    unlocks: "FanDuel, BetMGM, Caesars, Pinnacle and Betfair next to DraftKings",
+  },
   { key: "sponsor", env: "SUI_SPONSOR_KEY", unlocks: "pay the anchors' gas on testnet" },
   { key: "anchor", env: "HUNCH_PACKAGE_ID", unlocks: "hunch::anchor, after `sui client publish`" },
   {
@@ -68,6 +73,12 @@ export function StatusPage() {
             tatum today · {status.tatum.credits} of {status.tatum.budget} credits
             {calls.length > 0 && ` · ${calls.map(([m, n]) => `${m} ${n}`).join(" · ")}`}
             {status.tatum.fallback && " · on the public fullnode after a 402"}
+          </p>
+          <p className="font-mono text-xs text-ink-2">
+            the odds api ·{" "}
+            {status.oddsApi.key
+              ? `${status.oddsApi.calls} of ${status.oddsApi.cap} calls today${status.oddsApi.remaining === null ? "" : ` · ${status.oddsApi.remaining} credits left this month`} · ${status.oddsApi.books.join(", ")}`
+              : "no key (ODDS_API_KEY): the books are DraftKings via ESPN only"}
           </p>
           <p className="font-mono text-xs text-ink-2">
             on record · {status.onRecord.rules} rules · {status.onRecord.picks} picks ·{" "}

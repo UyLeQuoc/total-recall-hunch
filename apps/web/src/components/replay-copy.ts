@@ -7,8 +7,17 @@ const SOURCE: Record<string, string> = {
   kalshi: "Kalshi's",
 };
 
-export function replayHeadline(r: Replay, isBtc: boolean): string {
-  const unit = isBtc ? "5-minute windows" : "games";
+export type ReplayKind = "btc" | "nba" | "senate";
+
+const UNIT: Record<ReplayKind, string> = { btc: "5-minute windows", nba: "games", senate: "races" };
+
+export function replayHeadline(r: Replay, kind: ReplayKind): string {
+  const unit = UNIT[kind];
+  if (r.considered === 0) {
+    return kind === "senate"
+      ? "No Senate race has resolved yet: this rule's record starts on election night."
+      : `Nothing to replay yet: no ${unit} with results in the last 7 days.`;
+  }
   if (r.fires === 0) {
     const missing = r.skipped > 0 ? ` (${r.skipped} had no stored prices)` : "";
     return `Last 7 days: no fires across ${r.considered.toLocaleString("en-US")} ${unit}${missing}.`;
@@ -17,7 +26,7 @@ export function replayHeadline(r: Replay, isBtc: boolean): string {
   const vs =
     r.against.brier === null
       ? ""
-      : `, ${against} ${brier(r.against.brier)} on the same ${isBtc ? "windows" : "games"}`;
+      : `, ${against} ${brier(r.against.brier)} on the same ${kind === "btc" ? "windows" : unit}`;
   return `Last 7 days: ${r.fires} fires, ${r.right} right. Brier ${brier(r.brier)}${vs}.`;
 }
 
@@ -29,18 +38,18 @@ export function replayVerdict(r: Replay): string | null {
   return `${ahead ? "Ahead of" : "Behind"} the market it bets against so far.${small}`;
 }
 
-export function replayFootnotes(r: Replay, isBtc: boolean): string[] {
+export function replayFootnotes(r: Replay, kind: ReplayKind): string[] {
   const notes: string[] = [];
   if (r.skipped > 0)
     notes.push(
-      `${r.skipped} of ${r.considered} games skipped: no stored price from a source the rule reads.`,
+      `${r.skipped} of ${r.considered} ${kind === "senate" ? "races" : "games"} skipped: no stored price from a source the rule reads.`,
     );
   if (r.closingLines > 0) {
     notes.push(
       `${r.closingLines} fires read the books' closing line (backfilled), not a live snapshot.`,
     );
   }
-  if (isBtc)
+  if (kind === "btc")
     notes.push(
       "No DeepBook Predict prices are stored yet, so BTC rules are compared with a coin flip (0.250).",
     );

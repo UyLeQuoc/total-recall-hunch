@@ -1,33 +1,20 @@
 import type { Logger } from "@hunch/chain";
 import type { Db } from "../db/client.ts";
+import { maxAgeMs } from "../monitor/evaluate.ts";
+import { snapshotDue } from "./cadence.ts";
 import { type EspnGame, fetchClosingBooksProb, fetchScoreboard } from "./espn.ts";
 import * as kalshi from "./kalshi.ts";
+import { consensus, fetchNbaOdds, matchGame, type OddsEvent } from "./odds-api.ts";
 import * as polymarket from "./polymarket.ts";
 import { addSnapshot, eventId, lastSnapshotAt, upsertGame } from "./store.ts";
 import { easternDate, kalshiEventTicker, type Matchup, polymarketSlug } from "./teams.ts";
 
 const HOUR = 3_600_000;
-const NEAR_LOCK_MS = 2 * HOUR;
-const NEAR_CADENCE_MS = 5 * 60_000;
-const FAR_CADENCE_MS = 30 * 60_000;
 const HISTORY_BEFORE_LOCK_MS = 3 * HOUR;
 const BACKFILL_DAYS = 7;
 
 function matchup(game: EspnGame): Matchup {
   return { away: game.away.abbr, home: game.home.abbr, startsAt: game.startsAt };
-}
-
-export function snapshotDue(
-  now: Date,
-  startsAt: Date,
-  last: Date | undefined,
-  slackMs = 30_000,
-): boolean {
-  const untilLock = startsAt.getTime() - now.getTime();
-  if (untilLock <= 0) return false;
-  if (!last) return true;
-  const cadence = untilLock <= NEAR_LOCK_MS ? NEAR_CADENCE_MS : FAR_CADENCE_MS;
-  return now.getTime() - last.getTime() >= cadence - slackMs;
 }
 
 async function upcomingGames(now: Date): Promise<EspnGame[]> {
@@ -37,7 +24,26 @@ async function upcomingGames(now: Date): Promise<EspnGame[]> {
   return all.flat();
 }
 
-export async function ingestNba(db: Db, log: Logger, now = new Date()): Promise<void> {
+export interface OddsApiConfig {
+  apiKey: string | undefined;
+  dailyCalls: number;
+}
+
+async function freshBookQuotes(db: Db, id: string, now: Date, lock: Date): Promise<number[]> {
+  const rows = await db<{ source: string; home_prob: number }[]>`
+    select distinct on (source) source, home_prob from snapshots
+    where event_id = ${id} and source like 'book:%' and source <> 'book:draftkings'
+      and at > ${new Date(now.getTime() - maxAgeMs(now, lock))}
+    order by source, at desc`;
+  return rows.map((r) => r.home_prob);
+}
+
+export async function ingestNba(
+  db: Db,
+  log: Logger,
+  oddsApi: OddsApiConfig = { apiKey: undefined, dailyCalls: 0 },
+  now = new Date(),
+): Promise<void> {
   const games = await upcomingGames(now);
   for (const game of games) await upsertGame(db, game);
 
@@ -48,15 +54,51 @@ export async function ingestNba(db: Db, log: Logger, now = new Date()): Promise<
   } catch (err) {
     log.warn("kalshi unavailable", { reason: String(err) });
   }
+  let odds: OddsEvent[] | undefined;
+  if (oddsApi.apiKey) {
+    try {
+      odds = await fetchNbaOdds(
+        db,
+        oddsApi.apiKey,
+        oddsApi.dailyCalls,
+        pre.map((g) => g.startsAt),
+        now,
+      );
+    } catch (err) {
+      log.warn("the odds api unavailable", { reason: String(err) });
+    }
+  }
 
   let written = 0;
   for (const game of pre) {
     const id = eventId(game);
+    const match = odds
+      ? matchGame(odds, {
+          homeNickname: game.home.name,
+          awayNickname: game.away.name,
+          startsAt: game.startsAt,
+        })
+      : undefined;
+    for (const quote of match?.books ?? []) {
+      await addSnapshot(db, id, `book:${quote.book}`, quote.homeProb, now, "live");
+      written++;
+    }
+    const others =
+      match || game.booksHomeProb !== undefined
+        ? await freshBookQuotes(db, id, now, game.startsAt)
+        : [];
+    const books = consensus(
+      game.booksHomeProb !== undefined ? [game.booksHomeProb, ...others] : others,
+    );
     if (
-      game.booksHomeProb !== undefined &&
-      snapshotDue(now, game.startsAt, await lastSnapshotAt(db, id, "books"))
+      books !== undefined &&
+      (match !== undefined ||
+        snapshotDue(now, game.startsAt, await lastSnapshotAt(db, id, "books")))
     ) {
-      await addSnapshot(db, id, "books", game.booksHomeProb, now, "live");
+      await addSnapshot(db, id, "books", books, now, "live");
+      if (game.booksHomeProb !== undefined) {
+        await addSnapshot(db, id, "book:draftkings", game.booksHomeProb, now, "live");
+      }
       written++;
     }
     const k = kalshiProbs?.get(kalshiEventTicker(matchup(game)));
@@ -79,7 +121,12 @@ export async function ingestNba(db: Db, log: Logger, now = new Date()): Promise<
       }
     }
   }
-  log.info("nba ingest", { games: games.length, upcoming: pre.length, snapshots: written });
+  log.info("nba ingest", {
+    games: games.length,
+    upcoming: pre.length,
+    snapshots: written,
+    oddsApi: odds ? odds.length : "skipped",
+  });
 }
 
 async function backfillGame(db: Db, game: EspnGame, log: Logger): Promise<void> {

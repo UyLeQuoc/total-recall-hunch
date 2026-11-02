@@ -22,7 +22,15 @@ function game(i: number, winner: "home" | "away", books: number, poly: number): 
       kind: "history",
     },
   ];
-  return { id: `g${i}`, home: "CLE", away: "OKC", startsAt: lock, winner, snapshots: snaps };
+  return {
+    id: `g${i}`,
+    title: "OKC @ CLE",
+    home: "CLE",
+    away: "OKC",
+    startsAt: lock,
+    winner,
+    snapshots: snaps,
+  };
 }
 
 describe("voices", () => {

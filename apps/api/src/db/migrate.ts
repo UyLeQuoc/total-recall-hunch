@@ -160,6 +160,12 @@ const STATEMENTS = [
     created_at timestamptz not null default now(),
     written_at timestamptz
   )`,
+  "alter table events add column if not exists title text",
+  `create table if not exists odds_api_usage (
+    day date primary key,
+    calls int not null,
+    remaining int
+  )`,
   `create table if not exists tatum_usage (
     day date not null,
     method text not null,

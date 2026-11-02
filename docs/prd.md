@@ -226,11 +226,11 @@ sees, what Hunch does, and the requirement that builds it (§7).
 
 - The landing page leads with "What's your hunch?" and three examples:
   - "When the books and Polymarket disagree by 2+ points on an NBA game, the books are right."
-  - "On NBA games, Kalshi is sharper than the books when they split by 2+ points."
+  - "On Senate races, Kalshi is sharper than Polymarket when they split by 2+ points."
   - "When BTC rises more than 0.3% in 5 minutes, it keeps rising for the next 5."
-- The NBA examples say 2+ points because, measured on Nov 2 over the week's 49 games, the books and
-  Polymarket were never 5 points apart 30 minutes before tip-off
-  ([ADR-0008](adr/0008-first-runnable-slice.md)). An election example returns with the election ingest.
+- The examples say 2+ points because, measured on Nov 2, the books and Polymarket were never 5 points
+  apart 30 minutes before tip-off over the week's 49 NBA games, and only one Senate race was
+  ([ADR-0008](adr/0008-first-runnable-slice.md), [ADR-0013](adr/0013-odds-api-and-senate-races.md)).
 - A visitor's rules run in practice. Signing in keeps them, and their picks, under the visitor's name.
 
 ### 6.2 The rule card and the ladder
@@ -393,19 +393,19 @@ A small status panel shows:
 
 ### 7.2 Later
 
-| ID  | Requirement                                                                                       | Priority |
-| --- | ------------------------------------------------------------------------------------------------- | -------- |
-| H13 | Trading for proven BTC rules on DeepBook Predict (sessions, limits re-checked before every order) | P1       |
-| H14 | Nudges from `analyze`                                                                             | P1       |
-| H15 | Paper positions with exits and P&L                                                                | P1       |
-| H16 | Telegram: `/hunch`, notifications, Undo                                                           | P1       |
-| H17 | Groups: invite link, group scoreboard, member trust                                               | P1       |
-| H18 | Pundit picks from a pasted link                                                                   | P1       |
-| H19 | Agents as forecasters through MCP                                                                 | P1       |
-| H20 | More bookmakers through The Odds API                                                              | P2       |
-| H21 | Sealed picks (Seal time-lock)                                                                     | P2       |
-| H22 | X-post triggers                                                                                   | P2       |
-| H23 | User-owned memory accounts                                                                        | P2       |
+| ID  | Requirement                                                                                           | Priority |
+| --- | ----------------------------------------------------------------------------------------------------- | -------- |
+| H13 | Trading for proven BTC rules on DeepBook Predict (sessions, limits re-checked before every order)     | P1       |
+| H14 | Nudges from `analyze`                                                                                 | P1       |
+| H15 | Paper positions with exits and P&L                                                                    | P1       |
+| H16 | Telegram: `/hunch`, notifications, Undo                                                               | P1       |
+| H17 | Groups: invite link, group scoreboard, member trust                                                   | P1       |
+| H18 | Pundit picks from a pasted link                                                                       | P1       |
+| H19 | Agents as forecasters through MCP                                                                     | P1       |
+| H20 | More bookmakers through The Odds API (built Nov 2, [ADR-0013](adr/0013-odds-api-and-senate-races.md)) | P2       |
+| H21 | Sealed picks (Seal time-lock)                                                                         | P2       |
+| H22 | X-post triggers                                                                                       | P2       |
+| H23 | User-owned memory accounts                                                                            | P2       |
 
 ## 8. The rule
 

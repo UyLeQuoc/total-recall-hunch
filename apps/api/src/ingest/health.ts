@@ -4,6 +4,7 @@ import { usageToday } from "../anchor/meter.ts";
 import type { Db } from "../db/client.ts";
 import { memoryCounts } from "../memory/queue.ts";
 import type { Services } from "../services.ts";
+import { callsToday, ODDS_BOOKS } from "./odds-api.ts";
 
 const HOURS = 24;
 
@@ -25,6 +26,7 @@ export interface Health {
     sponsor: boolean;
     anchor: boolean;
     agent: boolean;
+    odds: boolean;
   };
   network: string;
   agent: string | null;
@@ -35,6 +37,7 @@ export interface Health {
   };
   memories: Record<string, number>;
   onRecord: { rules: number; picks: number; delegations: number };
+  oddsApi: { key: boolean; calls: number; cap: number; remaining: number | null; books: string[] };
 }
 
 function hourlyCounts(
@@ -65,11 +68,13 @@ export async function loadHealth(s: Services, now = new Date()): Promise<Health>
     select count(*)::int as games,
       count(*) filter (where exists (select 1 from snapshots s where s.event_id = e.id))::int as with_prices
     from events e where e.status = 'post'`;
-  const sources: SourceHealth[] = ["books", "polymarket", "kalshi"].map((source) => ({
-    source,
-    last: last.find((l) => l.source === source)?.at.toISOString() ?? null,
-    hourly: hourlyCounts(hourly, source),
-  }));
+  const sources: SourceHealth[] = ["books", "polymarket", "kalshi", "book:pinnacle"].map(
+    (source) => ({
+      source,
+      last: last.find((l) => l.source === source)?.at.toISOString() ?? null,
+      hourly: hourlyCounts(hourly, source),
+    }),
+  );
   sources.push({
     source: "btc",
     last: btcLast[0]?.at?.toISOString() ?? null,
@@ -98,12 +103,19 @@ export async function loadHealth(s: Services, now = new Date()): Promise<Health>
       sponsor: Boolean(env.SUI_SPONSOR_KEY),
       anchor: Boolean(env.HUNCH_PACKAGE_ID),
       agent: Boolean(s.agent),
+      odds: Boolean(env.ODDS_API_KEY),
     },
     network: s.anchor?.network ?? "testnet",
     agent: s.agent?.address ?? null,
     anchors: await anchorSummary(db),
     memories: await memoryCounts(db),
     onRecord: (await recordCounts(db))[0] ?? { rules: 0, picks: 0, delegations: 0 },
+    oddsApi: {
+      key: Boolean(env.ODDS_API_KEY),
+      ...(await callsToday(db, now)),
+      cap: env.ODDS_API_DAILY_CALLS,
+      books: ODDS_BOOKS,
+    },
   };
 }
 

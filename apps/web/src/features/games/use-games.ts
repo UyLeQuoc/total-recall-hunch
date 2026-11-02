@@ -16,6 +16,8 @@ const priceSchema = z.object({
 
 const gameSchema = z.object({
   id: z.string(),
+  league: z.enum(["NBA", "SENATE"]),
+  title: z.string(),
   home: z.string(),
   away: z.string(),
   startsAt: z.string(),
@@ -25,6 +27,9 @@ const gameSchema = z.object({
   prices: z.array(priceSchema),
   gap: z.object({ a: z.string(), b: z.string(), pts: z.number() }).nullable(),
   flagged: z.boolean(),
+  books: z.array(
+    z.object({ book: z.string(), homeProb: z.number(), at: z.string(), fresh: z.boolean() }),
+  ),
   call: z
     .object({
       homeProb: z.number(),

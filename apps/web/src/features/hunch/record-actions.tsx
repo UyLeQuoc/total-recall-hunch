@@ -11,9 +11,17 @@ interface RecordActionsProps {
   practiceBusy: boolean;
   onPractice: () => void;
   onEdit: () => void;
+  onRecorded: () => void;
 }
 
-export function RecordActions({ rule, practiceBusy, onPractice, onEdit }: RecordActionsProps) {
+export function RecordActions({
+  rule,
+  practiceBusy,
+  onPractice,
+  onEdit,
+  onRecorded,
+}: RecordActionsProps) {
+  const lock = rule.kind === "senate" ? "the polls close" : "tip-off";
   const { account } = useAccount();
   const [onRecord, setOnRecord] = useState(false);
   const [askSignIn, setAskSignIn] = useState(false);
@@ -24,7 +32,10 @@ export function RecordActions({ rule, practiceBusy, onPractice, onEdit }: Record
       return;
     }
     const out = await actions.putOnRecord(rule.id);
-    if (out) setOnRecord(true);
+    if (out) {
+      setOnRecord(true);
+      onRecorded();
+    }
   };
   return (
     <div className="flex flex-col gap-2">
@@ -44,7 +55,7 @@ export function RecordActions({ rule, practiceBusy, onPractice, onEdit }: Record
       {onRecord ? (
         <p className="text-[13px]">
           <strong className="font-semibold">On record.</strong> From now on, every pick it makes is
-          signed before tip-off and anchored on Sui.{" "}
+          signed before {lock} and anchored on Sui.{" "}
           <Link href={`/r/${rule.id}`} className="underline decoration-dotted underline-offset-4">
             Open the rule's page
           </Link>
@@ -55,7 +66,7 @@ export function RecordActions({ rule, practiceBusy, onPractice, onEdit }: Record
           "See one scored now" runs a BTC practice pick that scores in 5 minutes.{" "}
           {rule.isBtc
             ? "BTC rules stay in practice; NBA rules go on record."
-            : "On record, every pick is signed before tip-off and anchored on Sui."}{" "}
+            : `On record, every pick is signed before ${lock} and anchored on Sui.`}{" "}
           <Link href={`/r/${rule.id}`} className="underline decoration-dotted underline-offset-4">
             Rule page
           </Link>

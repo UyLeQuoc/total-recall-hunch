@@ -16,13 +16,13 @@ const base: Replay = {
 
 describe("replay copy", () => {
   it("states fires, hits and both Briers in one line", () => {
-    expect(replayHeadline(base, false)).toBe(
+    expect(replayHeadline(base, "nba")).toBe(
       "Last 7 days: 9 fires, 6 right. Brier 0.210, Polymarket's 0.240 on the same games.",
     );
   });
 
   it("says plainly when nothing fired", () => {
-    expect(replayHeadline({ ...base, fires: 0, right: 0, brier: null }, false)).toBe(
+    expect(replayHeadline({ ...base, fires: 0, right: 0, brier: null }, "nba")).toBe(
       "Last 7 days: no fires across 38 games (2 had no stored prices).",
     );
   });
@@ -32,6 +32,6 @@ describe("replay copy", () => {
   });
 
   it("lists the skips and the backfilled closing lines", () => {
-    expect(replayFootnotes(base, false)).toHaveLength(2);
+    expect(replayFootnotes(base, "nba")).toHaveLength(2);
   });
 });

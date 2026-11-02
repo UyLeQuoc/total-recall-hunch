@@ -5,6 +5,7 @@ import { newestLines, queueMemory } from "../memory/queue.ts";
 import { type Operator, recallLines } from "../memory/walrus.ts";
 import { loadPastGames } from "../monitor/history.ts";
 import {
+  CONTEXT,
   type Observation,
   parseTrustLine,
   pricesAtLock,
@@ -27,11 +28,14 @@ async function pickObservations(db: Db): Promise<Observation[]> {
       confidence: number;
       outcome: number;
       picked_at: Date;
+      league: "NBA" | "SENATE";
     }[]
-  >`select rule_id, version, address, confidence, outcome, picked_at from picks
-    where market = 'nba-ml' and stage = 'on_record' and outcome is not null and retracted_at is null`;
+  >`select p.rule_id, p.version, p.address, p.confidence, p.outcome, p.picked_at, e.league
+    from picks p join events e on e.id = p.event_id
+    where p.stage = 'on_record' and p.outcome is not null and p.retracted_at is null`;
   return rows.map((r) => ({
     voice: r.rule_id ? `rule:${r.rule_id}@v${r.version ?? 1}` : `person:${r.address ?? "unknown"}`,
+    ctx: CONTEXT[r.league],
     at: r.picked_at,
     p: r.confidence,
     y: r.outcome === 1 ? 1 : 0,
@@ -39,8 +43,14 @@ async function pickObservations(db: Db): Promise<Observation[]> {
 }
 
 export async function writeTrustSnapshots(db: Db, log: Logger, now = new Date()): Promise<number> {
-  const games = await loadPastGames(db, new Date(now.getTime() - HISTORY_DAYS * 86_400_000), now);
-  const stats = voiceStats([...sourceObservations(games), ...(await pickObservations(db))]);
+  const since = new Date(now.getTime() - HISTORY_DAYS * 86_400_000);
+  const games = await loadPastGames(db, since, now, "NBA");
+  const races = await loadPastGames(db, since, now, "SENATE");
+  const stats = voiceStats([
+    ...sourceObservations(games, CONTEXT.NBA),
+    ...sourceObservations(races, CONTEXT.SENATE),
+    ...(await pickObservations(db)),
+  ]);
   const asOf = now.toISOString().slice(0, 10);
   for (const stat of stats) {
     await queueMemory(
@@ -81,25 +91,29 @@ export async function writeTrustSnapshots(db: Db, log: Logger, now = new Date())
   return stats.length;
 }
 
-let recalled: { at: number; lines: { text: string; blobId: string }[] } | undefined;
+const recalled = new Map<string, { at: number; lines: { text: string; blobId: string }[] }>();
 
 export async function currentTrust(
   db: Db,
   op: Operator | undefined,
   log: Logger,
+  ctx: string = CONTEXT.NBA,
 ): Promise<Map<string, TrustCitation>> {
   const local = await newestLines(db, NAMESPACE.trust, "TRUST · ");
   const byText = new Map(local.map((l) => [l.text, l]));
   let source = local.map((l) => ({ text: l.text, blobId: l.blobId }));
   if (op) {
     try {
-      if (!recalled || Date.now() - recalled.at > RECALL_CACHE_MS) {
-        recalled = {
-          at: Date.now(),
-          lines: await recallLines(op, NAMESPACE.trust, "TRUST voice NBA moneyline n brier"),
-        };
-      }
-      if (recalled.lines.length > 0) source = recalled.lines;
+      const cached = recalled.get(ctx);
+      const fresh =
+        cached && Date.now() - cached.at <= RECALL_CACHE_MS
+          ? cached
+          : {
+              at: Date.now(),
+              lines: await recallLines(op, NAMESPACE.trust, `TRUST voice ${ctx} n brier`),
+            };
+      recalled.set(ctx, fresh);
+      if (fresh.lines.length > 0) source = fresh.lines;
     } catch (err) {
       log.warn("trust recall failed, using Postgres copies", { reason: String(err) });
     }
@@ -107,7 +121,7 @@ export async function currentTrust(
   const newest = new Map<string, TrustCitation & { asOf: string }>();
   for (const line of source) {
     const parsed = parseTrustLine(line.text);
-    if (!parsed) continue;
+    if (!parsed || parsed.ctx !== ctx) continue;
     const prev = newest.get(parsed.voice);
     if (prev && (prev.asOf > parsed.asOf || (prev.asOf === parsed.asOf && prev.n >= parsed.n)))
       continue;

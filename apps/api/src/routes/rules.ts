@@ -31,6 +31,7 @@ export function ruleRoutes(s: Services): Hono {
       compiledBy: stored.compiledBy,
       card: ruleCard(stored.rule),
       isBtc: isBtcRule(stored.rule),
+      league: stored.rule.scope.league[0],
       owner: owner.startsWith("sui:") ? owner.slice(4) : null,
       mine: caller.owners.includes(owner),
       paused: meta[0]?.paused ?? false,

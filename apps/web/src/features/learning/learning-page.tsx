@@ -13,10 +13,14 @@ import { cn } from "@/lib/utils";
 import { type Learning, useLearning } from "./use-learning";
 
 const NAME: Record<string, string> = {
-  books: "the books",
+  books: "the books (consensus)",
   polymarket: "Polymarket",
   kalshi: "Kalshi",
 };
+
+function voiceName(voice: string): string {
+  return NAME[voice] ?? (voice.startsWith("book:") ? voice.slice(5) : voice);
+}
 
 function chart(curve: Learning["curve"]): string {
   return lineChart(
@@ -92,7 +96,7 @@ export function LearningPage() {
             <TableBody>
               {data.voices.map((v) => (
                 <TableRow key={v.voice}>
-                  <TableCell>{NAME[v.voice] ?? v.voice}</TableCell>
+                  <TableCell>{voiceName(v.voice)}</TableCell>
                   <TableCell className="font-mono text-xs">{v.n}</TableCell>
                   <TableCell className="font-mono text-xs">{v.brier.toFixed(4)}</TableCell>
                   <TableCell className="font-mono text-xs">{Math.round(v.hit * 100)}%</TableCell>

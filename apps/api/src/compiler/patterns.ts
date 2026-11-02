@@ -57,16 +57,27 @@ function compileSplit(text: string, today: Date): CompileResult | undefined {
   if (sources.length < 2) return undefined;
   const points = text.match(/(\d+(?:\.\d+)?)\s*\+?\s*(?:points?|pts|percentage points|%)/);
   if (!points?.[1]) return undefined;
-  if (!/\bnba\b|basketball/.test(text)) {
-    if (/senate|house|election|midterm|epl|premier league|nfl|soccer/.test(text)) {
+  const senate = /\bsenate\b/.test(text);
+  if (!senate && !/\bnba\b|basketball/.test(text)) {
+    if (/house|governor|election|midterm|epl|premier league|nfl|soccer/.test(text)) {
       return {
         kind: "refused",
         reason:
-          "For now Hunch tests NBA moneylines and BTC. Elections and the EPL are next. Try the same hunch on NBA games.",
+          "For now Hunch tests NBA moneylines, the Senate races and BTC. Try the same hunch on one of those.",
       };
     }
-    return { kind: "question", question: "Which league should this run on? For now: NBA or BTC." };
+    return {
+      kind: "question",
+      question: "Which should this run on: NBA games, the Senate races, or BTC?",
+    };
   }
+  if (senate && sources.includes("books")) {
+    return {
+      kind: "refused",
+      reason: "The books don't price Senate races. Compare Polymarket and Kalshi instead.",
+    };
+  }
+  const league = senate ? "SENATE" : "NBA";
   const trusted = trustedSource(text, sources);
   const [first, second] = sources as [MarketSource, MarketSource];
   if (!trusted) {
@@ -80,14 +91,14 @@ function compileSplit(text: string, today: Date): CompileResult | undefined {
   const minutes = before?.[1] ? Number(before[1]) : DEFAULT_BEFORE_LOCK_MIN;
   const verb = trusted === "books" ? "beat" : "beats";
   const otherName = other === "books" ? "the books" : SOURCE_NAME[other];
-  const name = `${SOURCE_NAME[trusted]} ${verb} ${otherName} on NBA splits`;
+  const name = `${SOURCE_NAME[trusted]} ${verb} ${otherName} on ${senate ? "Senate" : "NBA"} splits`;
   return {
     kind: "rule",
     by: "pattern",
     rule: {
       name,
       version: 1,
-      scope: { league: ["NBA"], market: "moneyline" },
+      scope: { league: [league], market: "moneyline" },
       when: {
         all: [
           { kind: "before_lock", minutes },

@@ -20,6 +20,7 @@ import { useAccount } from "@/hooks/use-account";
 import { useRuleActions } from "@/hooks/use-rule-actions";
 import { meter } from "@/lib/ascii/meter";
 import { cn } from "@/lib/utils";
+import { ShareScorecard } from "./share-scorecard";
 import { type RuleView, useRule, type VersionView } from "./use-rule";
 
 const WHEN = new Intl.DateTimeFormat("en-GB", {
@@ -46,7 +47,7 @@ function scorecard(v: VersionView): string {
   return `${s.n} picks · ${s.right} right · 0 hidden${v.retracted ? ` · ${v.retracted} undone` : ""} · ${tail}`;
 }
 
-function VersionBlock({ v }: { v: VersionView }) {
+function VersionBlock({ v, ruleId }: { v: VersionView; ruleId: string }) {
   const s = v.onRecord;
   const bars =
     s.n > 0
@@ -69,6 +70,9 @@ function VersionBlock({ v }: { v: VersionView }) {
       </div>
       {v.hunch && <p className="text-[13px] text-ink-2">"{v.hunch}"</p>}
       {v.stage === "on_record" && <p className="font-mono text-xs">{scorecard(v)}</p>}
+      {v.stage === "on_record" && v.onRecord.n > 0 && (
+        <ShareScorecard ruleId={ruleId} title={v.card.title} scorecard={scorecard(v)} />
+      )}
       {bars && <AsciiArt text={bars} label="Brier on record against its market" />}
       {v.practice.n > 0 && (
         <p className="font-mono text-xs text-ink-3">
@@ -170,7 +174,7 @@ export function RulePage({ id }: { id: string }) {
           <div className="flex flex-col gap-4">
             <p className="text-xs font-medium text-ink-2">Record, per version</p>
             {rule.record.versions.map((v) => (
-              <VersionBlock key={v.version} v={v} />
+              <VersionBlock key={v.version} v={v} ruleId={rule.id} />
             ))}
           </div>
           {rule.record.picks.length > 0 && (
@@ -246,7 +250,10 @@ export function RulePage({ id }: { id: string }) {
           )}
           <div>
             <p className="mb-2 text-xs font-medium text-ink-2">Replay, last 7 days</p>
-            <ReplayView replay={rule.replay} isBtc={rule.isBtc} />
+            <ReplayView
+              replay={rule.replay}
+              kind={rule.isBtc ? "btc" : rule.league === "SENATE" ? "senate" : "nba"}
+            />
           </div>
         </>
       )}

@@ -32,10 +32,10 @@ function pct(p: number): string {
   return `${Math.round(p * 100)}%`;
 }
 
-function describe(c: Condition): string {
+function describe(c: Condition, lock = "tip-off"): string {
   switch (c.kind) {
     case "before_lock":
-      return `${c.minutes} min before tip-off`;
+      return `${c.minutes} min before ${lock}`;
     case "gap":
       return `${NAME[c.a]} vs ${NAME[c.b]} ≥ ${c.min_pts} pts apart`;
     case "price":
@@ -65,7 +65,7 @@ export function ruleCard(r: Rule): RuleCard {
       title: r.name,
       version: r.version,
       stage,
-      when: [`BTC/USD · ${r.when.all.map(describe).join(" · ")}`],
+      when: [`BTC/USD · ${r.when.all.map((c) => describe(c)).join(" · ")}`],
       then: [`PICK ${side}`, `confidence ${pct(pick.confidence.fixed)}`],
       against: "DeepBook Predict's price (a coin flip until Predict prices are stored)",
       limits,
@@ -86,7 +86,11 @@ export function ruleCard(r: Rule): RuleCard {
     title: r.name,
     version: r.version,
     stage,
-    when: [`NBA game · ${r.when.all.map(describe).join(" · ")}`],
+    when: [
+      r.scope.league[0] === "SENATE"
+        ? `Senate race · ${r.when.all.map((c) => describe(c, "the first polls close")).join(" · ")}`
+        : `NBA game · ${r.when.all.map((c) => describe(c)).join(" · ")}`,
+    ],
     then: [`PICK ${side}`, confidence],
     against: `${POSSESSIVE[r.against]} price`,
     limits,

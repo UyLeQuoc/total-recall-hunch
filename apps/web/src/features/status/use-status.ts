@@ -23,6 +23,7 @@ const statusSchema = z.object({
     sponsor: z.boolean(),
     anchor: z.boolean(),
     agent: z.boolean(),
+    odds: z.boolean(),
   }),
   network: z.string(),
   agent: z.string().nullable(),
@@ -40,6 +41,13 @@ const statusSchema = z.object({
   }),
   memories: z.record(z.string(), z.number()),
   onRecord: z.object({ rules: z.number(), picks: z.number(), delegations: z.number() }),
+  oddsApi: z.object({
+    key: z.boolean(),
+    calls: z.number(),
+    cap: z.number(),
+    remaining: z.number().nullable(),
+    books: z.array(z.string()),
+  }),
 });
 
 export type Status = z.infer<typeof statusSchema>;

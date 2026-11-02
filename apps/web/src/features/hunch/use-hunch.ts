@@ -9,6 +9,7 @@ export interface CompiledRule {
   card: Card;
   compiledBy: string;
   isBtc: boolean;
+  kind: "btc" | "nba" | "senate";
 }
 
 interface HunchState {
@@ -55,6 +56,12 @@ export function useHunch(visitor: string) {
               card: e.card,
               compiledBy: e.compiledBy,
               isBtc: e.rule.scope.league[0] === "BTC",
+              kind:
+                e.rule.scope.league[0] === "BTC"
+                  ? "btc"
+                  : e.rule.scope.league[0] === "SENATE"
+                    ? "senate"
+                    : "nba",
             },
           };
         case "replay":

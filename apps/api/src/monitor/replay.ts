@@ -11,6 +11,7 @@ export const REPLAY_DAYS = 7;
 
 export interface PastGame {
   id: string;
+  title: string;
   home: string;
   away: string;
   startsAt: Date;
@@ -129,7 +130,7 @@ export function replaySports(rule: SportsRule, games: PastGame[], now: Date): Re
       }
       recent.push({
         at,
-        label: `${game.away} @ ${game.home}`,
+        label: game.title,
         pick: pick.side === "home" ? game.home : game.away,
         confidence: pick.confidence,
         right: isRight,

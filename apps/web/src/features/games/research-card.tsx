@@ -25,14 +25,19 @@ export function ResearchCard({ game, pickedId, problem, onPick }: ResearchCardPr
   const [side, setSide] = useState<"home" | "away">(call && call.homeProb < 0.5 ? "away" : "home");
   const callSide = call ? (side === "home" ? call.homeProb : 1 - call.homeProb) : 0.6;
   const [pct, setPct] = useState(Math.min(Math.max(Math.round(callSide * 100), 50), 99));
-  const prices = meter(
-    game.prices.map((p) => ({
-      label: `${NAME[p.source] ?? p.source}${p.fresh ? "" : " (stale)"}`,
+  const rows = [
+    ...game.prices.map((p) => ({
+      label: `${NAME[p.source] ?? p.source}${p.source === "books" && game.books.length > 1 ? " (consensus)" : ""}${p.fresh ? "" : " (stale)"}`,
       value: p.homeProb,
     })),
-    28,
-    3,
-  );
+    ...(game.books.length > 1
+      ? game.books.map((b) => ({
+          label: `  ${b.book}${b.fresh ? "" : " (stale)"}`,
+          value: b.homeProb,
+        }))
+      : []),
+  ];
+  const prices = meter(rows, 28, 3);
   return (
     <div className="flex flex-col gap-3 py-2">
       <div>
@@ -116,7 +121,10 @@ export function ResearchCard({ game, pickedId, problem, onPick }: ResearchCardPr
             <Button type="submit" size="xs">
               Log it on record
             </Button>
-            <span className="text-[12px] text-ink-3">refused after tip-off · Undo until then</span>
+            <span className="text-[12px] text-ink-3">
+              {game.league === "SENATE" ? "refused once the polls close" : "refused after tip-off"}{" "}
+              · Undo until then
+            </span>
           </form>
         ) : (
           <p className="text-[13px] text-ink-3">

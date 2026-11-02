@@ -44,7 +44,7 @@ docs/             PRD, ADRs, tech reference, code rules, event rules
 
 ## Develop
 
-Needs Bun 1.3.14, Node 24 and Docker.
+Needs Bun 1.3.14, Node 24, Docker and, for anchors, the Sui CLI.
 
 ```bash
 bun install
@@ -57,7 +57,19 @@ bun run dev              # API on :8787, web on http://localhost:5290
 The first start backfills the last 7 days (about a minute). Without `OPENROUTER_API_KEY`, hunches
 shaped like the three examples compile; with it, any wording does.
 
-Checks: `bun run typecheck && bun run lint && bun run test && bun run docs:links`.
+**End to end on your machine, anchors included** ([ADR-0015](docs/adr/0015-local-end-to-end.md)):
+
+```bash
+bun run localnet         # in its own terminal: a throwaway Sui localnet + hunch::anchor, lines in .env
+bun run dev              # restart it after the localnet is up
+```
+
+Then: sign in with **Use a test key**, put an NBA or Senate rule on record or log a pick on **tonight**,
+Undo one, and open its proof: within a minute the batch is anchored and every check is green. Ctrl-C on
+the localnet takes its lines back out of `.env`.
+
+Checks: `bun run typecheck && bun run lint && bun run test && bun run docs:links`, and `sui move test`
+in `packages/move/hunch`.
 
 Agents: read [AGENTS.md](AGENTS.md).
 

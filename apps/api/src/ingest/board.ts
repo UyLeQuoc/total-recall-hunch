@@ -1,7 +1,7 @@
 import type { MarketSource } from "../compiler/rule.ts";
 import type { Db } from "../db/client.ts";
 import { maxAgeMs } from "../monitor/evaluate.ts";
-import { type AgentCall, agentCall, type TrustCitation } from "../score/voices.ts";
+import { type AgentCall, agentCall, CONTEXT, type TrustCitation } from "../score/voices.ts";
 
 const SOURCES: MarketSource[] = ["books", "polymarket", "kalshi"];
 const SERIES_POINTS = 24;
@@ -15,8 +15,17 @@ export interface BoardPrice {
   series: number[];
 }
 
+export interface BookPrice {
+  book: string;
+  homeProb: number;
+  at: string;
+  fresh: boolean;
+}
+
 export interface BoardGame {
   id: string;
+  league: "NBA" | "SENATE";
+  title: string;
   home: string;
   away: string;
   homeName: string;
@@ -29,6 +38,7 @@ export interface BoardGame {
   gap: { a: MarketSource; b: MarketSource; pts: number } | null;
   flagged: boolean;
   call: AgentCall | null;
+  books: BookPrice[];
 }
 
 export function widestGap(prices: BoardPrice[]): BoardGame["gap"] {
@@ -48,12 +58,14 @@ export function widestGap(prices: BoardPrice[]): BoardGame["gap"] {
 
 export async function loadBoard(
   db: Db,
-  trust: Map<string, TrustCitation>,
+  trust: Record<"NBA" | "SENATE", Map<string, TrustCitation>>,
   now = new Date(),
 ): Promise<BoardGame[]> {
   const events = await db<
     {
       id: string;
+      league: "NBA" | "SENATE";
+      title: string;
       home: string;
       away: string;
       home_name: string;
@@ -64,35 +76,48 @@ export async function loadBoard(
       away_score: number | null;
     }[]
   >`
-    select id, home, away, home_name, away_name, starts_at, status, home_score, away_score from events
-    where league = 'NBA' and starts_at > ${new Date(now.getTime() - 4 * 3_600_000)}
-      and starts_at < ${new Date(now.getTime() + 30 * 3_600_000)}
-    order by starts_at, id`;
+    select id, league, coalesce(title, away || ' @ ' || home) as title, home, away, home_name, away_name,
+           starts_at, status, home_score, away_score from events
+    where league in ('NBA', 'SENATE') and starts_at > ${new Date(now.getTime() - 4 * 3_600_000)}
+      and starts_at < ${new Date(now.getTime() + 36 * 3_600_000)}
+    order by league, starts_at, title`;
   if (events.length === 0) return [];
-  const snaps = await db<{ event_id: string; source: MarketSource; home_prob: number; at: Date }[]>`
+  const snaps = await db<{ event_id: string; source: string; home_prob: number; at: Date }[]>`
     select event_id, source, home_prob, at from snapshots
     where event_id in ${db(events.map((e) => e.id))} and kind = 'live'
     order by at`;
   return events.map((e) => {
+    const cutoff = e.status === "pre" ? now : e.starts_at;
+    const isFresh = (at: Date) => cutoff.getTime() - at.getTime() <= maxAgeMs(cutoff, e.starts_at);
+    const mine = snaps.filter((s) => s.event_id === e.id);
     const prices: BoardPrice[] = [];
     for (const source of SOURCES) {
-      const list = snaps.filter((s) => s.event_id === e.id && s.source === source);
+      const list = mine.filter((s) => s.source === source);
       const last = list.at(-1);
       if (!last) continue;
-      const cutoff = e.status === "pre" ? now : e.starts_at;
       prices.push({
         source,
         homeProb: last.home_prob,
         at: last.at.toISOString(),
-        fresh: cutoff.getTime() - last.at.getTime() <= maxAgeMs(cutoff, e.starts_at),
+        fresh: isFresh(last.at),
         series: list.slice(-SERIES_POINTS).map((s) => s.home_prob),
       });
     }
+    const latestBook = new Map<string, { home_prob: number; at: Date }>();
+    for (const s of mine) if (s.source.startsWith("book:")) latestBook.set(s.source.slice(5), s);
+    const books: BookPrice[] = [...latestBook].map(([book, s]) => ({
+      book,
+      homeProb: s.home_prob,
+      at: s.at.toISOString(),
+      fresh: isFresh(s.at),
+    }));
     const gap = widestGap(prices);
-    const fresh: Partial<Record<MarketSource, number>> = {};
+    const fresh: Record<string, number | undefined> = {};
     for (const p of prices) if (p.fresh) fresh[p.source] = p.homeProb;
     return {
       id: e.id,
+      league: e.league,
+      title: e.title,
       home: e.home,
       away: e.away,
       homeName: e.home_name,
@@ -104,7 +129,8 @@ export async function loadBoard(
       prices,
       gap,
       flagged: gap !== null && gap.pts >= RADAR_PTS,
-      call: agentCall(fresh, trust),
+      call: agentCall(fresh, trust[e.league], CONTEXT[e.league]),
+      books,
     };
   });
 }

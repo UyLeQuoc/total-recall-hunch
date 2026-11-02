@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { readAnchor } from "../anchor/chain.ts";
-import { cachedRead, checkPick, loadForVerify, verdict } from "../anchor/verify.ts";
+import { usageToday } from "../anchor/meter.ts";
+import { cachedOnly, cachedRead, checkPick, loadForVerify, verdict } from "../anchor/verify.ts";
 import { loadMe } from "../auth/me.ts";
 import { manualPick } from "../monitor/manual.ts";
 import { retractPick } from "../monitor/signed.ts";
@@ -10,7 +11,7 @@ import { callerOf } from "./caller.ts";
 
 const pickId = z.string().regex(/^p_[0-9a-z]{16}$/);
 const pickBody = z.object({
-  eventId: z.string().regex(/^nba:\d+$/),
+  eventId: z.string().regex(/^(nba:\d+|senate:SENATE[A-Z]{2}S?-\d{2})$/),
   side: z.enum(["home", "away"]),
   confidence: z.number().min(0.5).max(0.99),
 });
@@ -63,17 +64,18 @@ export function pickRoutes(s: Services): Hono {
         why: string;
         home: string | null;
         away: string | null;
+        title: string | null;
         retracted_at: Date | null;
       }[]
     >`select p.stage, p.side, p.confidence, p.picked_at, p.expires_at, p.outcome, p.address, p.rule_id, p.why,
-             p.retracted_at, e.home, e.away
+             p.retracted_at, e.home, e.away, coalesce(e.title, e.away || ' @ ' || e.home) as title
       from picks p left join events e on e.id = p.event_id where p.id = ${id.data}`;
     const row = summary[0];
     if (!row) return c.json({ error: "No pick has that id." }, 404);
     const pick = {
       id: id.data,
       stage: row.stage,
-      label: row.home && row.away ? `${row.away} @ ${row.home}` : "BTC, 5 minutes",
+      label: row.title ?? "BTC, 5 minutes",
       team: row.home && row.away ? (row.side === "home" ? row.home : row.away) : row.side,
       confidence: row.confidence,
       pickedAt: row.picked_at.toISOString(),
@@ -88,11 +90,20 @@ export function pickRoutes(s: Services): Hono {
     if (!loaded) return c.json({ pick, verdict: "practice", checks: [] });
     const sui = s.sui;
     const packageId = s.env.HUNCH_PACKAGE_ID;
-    const read =
-      sui && packageId
-        ? (digest: string) => cachedRead(s.db, digest, (d) => readAnchor(sui, d, packageId))
+    const live = sui && packageId ? (d: string) => readAnchor(sui, d, packageId) : undefined;
+    const digest = loaded.anchor?.digest;
+    const cached = digest ? await cachedOnly(s.db, digest) : undefined;
+    const overBudget = (await usageToday(s.db)).credits >= s.env.DAILY_CREDIT_BUDGET;
+    const read = cached
+      ? async () => cached
+      : live && !overBudget
+        ? (d: string) => cachedRead(s.db, d, live)
         : undefined;
-    const checks = await checkPick(loaded, read);
+    const checks = await checkPick(
+      loaded,
+      read,
+      overBudget ? "Tatum's daily credit budget is spent; the read waits for tomorrow" : undefined,
+    );
     return c.json({
       pick,
       verdict: verdict(checks),

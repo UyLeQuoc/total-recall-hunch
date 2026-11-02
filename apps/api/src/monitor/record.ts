@@ -24,6 +24,7 @@ interface ActiveRule {
 
 interface UpcomingEvent {
   id: string;
+  league: "NBA" | "SENATE";
   home: string;
   away: string;
   starts_at: Date;
@@ -89,8 +90,8 @@ export async function runRecordMonitor(
   const rules = await activeRules(db);
   if (rules.length === 0) return;
   const events = await db<UpcomingEvent[]>`
-    select id, home, away, starts_at from events
-    where league = 'NBA' and status = 'pre' and starts_at > ${now}
+    select id, league, home, away, starts_at from events
+    where league in ('NBA', 'SENATE') and status = 'pre' and starts_at > ${now}
       and starts_at <= ${new Date(now.getTime() + LOOKAHEAD_MS)}`;
   if (events.length === 0) return;
   const snaps = await db<{ event_id: string; source: MarketSource; home_prob: number; at: Date }[]>`
@@ -102,7 +103,9 @@ export async function runRecordMonitor(
     const snapshots: Snapshot[] = snaps
       .filter((s) => s.event_id === event.id)
       .map((s) => ({ source: s.source, homeProb: s.home_prob, at: s.at, kind: "live" }));
+    const market = event.league === "SENATE" ? "senate-winner" : "nba-ml";
     for (const r of rules) {
+      if (r.rule.scope.league[0] !== event.league) continue;
       const already = await db<{ id: string }[]>`
         select id from picks where rule_id = ${r.id} and version = ${r.version} and event_id = ${event.id}
           and retracted_at is null limit 1`;
@@ -132,6 +135,7 @@ export async function runRecordMonitor(
           agent,
           {
             address: r.owner.slice(4),
+            market,
             ruleId: r.id,
             version: r.version,
             eventId: event.id,
@@ -161,7 +165,7 @@ export async function runRecordMonitor(
       await db`
         insert into picks (id, owner, rule_id, version, stage, market, side, confidence, why, inputs,
                            picked_at, expires_at, event_id, address)
-        values (${pickId}, ${r.owner}, ${r.id}, ${r.version}, 'practice', 'nba-ml', ${verdict.pick.side},
+        values (${pickId}, ${r.owner}, ${r.id}, ${r.version}, 'practice', ${market}, ${verdict.pick.side},
                 ${verdict.pick.confidence}, ${why}, ${db.json(seenPayload(verdict.pick.seen))}, ${now},
                 ${event.starts_at}, ${event.id}, ${r.owner.slice(4)})`;
       await logFire(db, r, event.id, now, true, verdict.why, pickId);

@@ -7,8 +7,10 @@ import { MePage } from "@/features/me/me-page";
 import { RulePage } from "@/features/rule/rule-page";
 import { StatusPage } from "@/features/status/status-page";
 import { VerifyPage } from "@/features/verify/verify-page";
+import { useSessionCheck } from "@/hooks/use-session-check";
 
 export function App() {
+  useSessionCheck();
   return (
     <div className="min-h-dvh">
       <SiteNav />

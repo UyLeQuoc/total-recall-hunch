@@ -40,6 +40,7 @@ export async function loadMe(db: Db, address: string): Promise<Me> {
       id: string;
       home: string | null;
       away: string | null;
+      title: string | null;
       side: string;
       confidence: number;
       picked_at: Date;
@@ -48,14 +49,14 @@ export async function loadMe(db: Db, address: string): Promise<Me> {
       retracted_at: Date | null;
       rule_id: string | null;
     }[]
-  >`select p.id, e.home, e.away, p.side, p.confidence, p.picked_at, p.expires_at, p.outcome, p.retracted_at, p.rule_id
+  >`select p.id, e.home, e.away, coalesce(e.title, e.away || ' @ ' || e.home) as title, p.side, p.confidence, p.picked_at, p.expires_at, p.outcome, p.retracted_at, p.rule_id
     from picks p left join events e on e.id = p.event_id
     where p.address = ${address} and p.stage = 'on_record'
     order by p.picked_at desc limit 40`;
   const notes = await db<
     { id: number; pick_id: string | null; text: string; created_at: Date; read_at: Date | null }[]
   >`
-    select id, pick_id, text, created_at, read_at from notifications
+    select id::int as id, pick_id, text, created_at, read_at from notifications
     where address = ${address} order by created_at desc limit 20`;
   return {
     address,
@@ -72,7 +73,7 @@ export async function loadMe(db: Db, address: string): Promise<Me> {
     rules: rules.sort((a, b) => b.picks - a.picks),
     picks: picks.map((p) => ({
       id: p.id,
-      label: p.home && p.away ? `${p.away} @ ${p.home}` : "BTC",
+      label: p.title ?? "BTC",
       team: p.home && p.away ? (p.side === "home" ? p.home : p.away) : p.side,
       confidence: p.confidence,
       pickedAt: p.picked_at.toISOString(),

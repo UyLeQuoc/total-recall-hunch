@@ -4,13 +4,15 @@ import type { PastGame } from "../monitor/replay.ts";
 import { brier, mean } from "./brier.ts";
 
 export const CTX = "NBA moneyline";
+export const CONTEXT = { NBA: "NBA moneyline", SENATE: "Senate race" } as const;
 const PRIOR = 0.25;
 const SHRINK_K = 10;
 const TREND_WINDOW = 10;
-const SOURCES: MarketSource[] = ["books", "polymarket", "kalshi"];
+const MAIN: MarketSource[] = ["books", "polymarket", "kalshi"];
 
 export interface Observation {
   voice: string;
+  ctx: string;
   at: Date;
   p: number;
   y: 0 | 1;
@@ -34,22 +36,22 @@ export function trustWeight(stat: { n: number; brier: number } | undefined): num
   return Math.max(PRIOR - shrunkBrier(stat), 0.002);
 }
 
-export function pricesAtLock(game: PastGame): Partial<Record<MarketSource, number>> {
+export function pricesAtLock(game: PastGame): Record<string, number | undefined> {
   const at = new Date(game.startsAt.getTime() - 1000);
-  const out: Partial<Record<MarketSource, number>> = {};
-  for (const s of SOURCES) {
+  const out: Record<string, number | undefined> = {};
+  for (const s of new Set(game.snapshots.map((x) => x.source))) {
     const seen = freshPrice(game.snapshots, s, at, game.startsAt, true);
     if (seen) out[s] = seen.homeProb;
   }
   return out;
 }
 
-export function sourceObservations(games: PastGame[]): Observation[] {
+export function sourceObservations(games: PastGame[], ctx: string = CTX): Observation[] {
   const obs: Observation[] = [];
   for (const g of games) {
     const y = g.winner === "home" ? 1 : 0;
     for (const [voice, p] of Object.entries(pricesAtLock(g))) {
-      if (p !== undefined) obs.push({ voice, at: g.startsAt, p, y });
+      if (p !== undefined) obs.push({ voice, ctx, at: g.startsAt, p, y });
     }
   }
   return obs;
@@ -57,9 +59,14 @@ export function sourceObservations(games: PastGame[]): Observation[] {
 
 export function voiceStats(observations: Observation[]): VoiceStat[] {
   const byVoice = new Map<string, Observation[]>();
-  for (const o of observations) byVoice.set(o.voice, [...(byVoice.get(o.voice) ?? []), o]);
+  for (const o of observations) {
+    const key = `${o.voice}|${o.ctx}`;
+    byVoice.set(key, [...(byVoice.get(key) ?? []), o]);
+  }
   const stats: VoiceStat[] = [];
-  for (const [voice, list] of byVoice) {
+  for (const list of byVoice.values()) {
+    const voice = list[0]?.voice ?? "";
+    const ctx = list[0]?.ctx ?? CTX;
     const sorted = [...list].sort((a, b) => a.at.getTime() - b.at.getTime());
     const scores = sorted.map((o) => brier(o.p, o.y === 1));
     const all = mean(scores) ?? PRIOR;
@@ -73,7 +80,7 @@ export function voiceStats(observations: Observation[]): VoiceStat[] {
             ? "down"
             : "flat";
     const hits = sorted.filter((o) => (o.p >= 0.5 ? o.y === 1 : o.y === 0)).length;
-    stats.push({ voice, ctx: CTX, n: sorted.length, brier: all, hit: hits / sorted.length, trend });
+    stats.push({ voice, ctx, n: sorted.length, brier: all, hit: hits / sorted.length, trend });
   }
   return stats.sort((a, b) => a.voice.localeCompare(b.voice));
 }
@@ -100,10 +107,11 @@ const NAME: Record<string, string> = {
 };
 
 export function agentCall(
-  prices: Partial<Record<MarketSource, number>>,
+  prices: Record<string, number | undefined>,
   trust: Map<string, TrustCitation>,
+  ctx: string = CTX,
 ): AgentCall | null {
-  const present = SOURCES.filter((s) => prices[s] !== undefined);
+  const present = MAIN.filter((s) => prices[s] !== undefined);
   if (present.length === 0) return null;
   const raw = present.map((s) => ({ source: s, w: trustWeight(trust.get(s)) }));
   const total = raw.reduce((a, b) => a + b.w, 0);
@@ -125,7 +133,7 @@ export function agentCall(
   const lines: AgentCall["lines"] = [];
   if (best) {
     lines.push({
-      text: `Leaning on ${NAME[best.voice] ?? best.voice} for ${CTX}s (n=${best.n}, Brier ${best.brier.toFixed(3)})`,
+      text: `Leaning on ${NAME[best.voice] ?? best.voice} for ${ctx}s (n=${best.n}, Brier ${best.brier.toFixed(3)})`,
       cites: best,
     });
   }
@@ -153,7 +161,7 @@ export function learningCurve(games: PastGame[]): LearningPoint[] {
   const points: LearningPoint[] = [];
   for (const g of sorted) {
     const prices = pricesAtLock(g);
-    const present = SOURCES.filter((s) => prices[s] !== undefined);
+    const present = MAIN.filter((s) => prices[s] !== undefined);
     const y = g.winner === "home" ? 1 : 0;
     if (present.length >= 2) {
       const stats = new Map(
@@ -178,7 +186,7 @@ export function learningCurve(games: PastGame[]): LearningPoint[] {
     }
     for (const s of present) {
       const p = prices[s];
-      if (p !== undefined) history.push({ voice: s, at: g.startsAt, p, y });
+      if (p !== undefined) history.push({ voice: s, ctx: CTX, at: g.startsAt, p, y });
     }
   }
   return points;

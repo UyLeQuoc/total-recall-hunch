@@ -17,7 +17,7 @@ export type HunchEvent =
 export async function replayRule(db: Db, rule: Rule, now: Date): Promise<Replay> {
   const from = new Date(now.getTime() - REPLAY_DAYS * 86_400_000);
   if (isBtcRule(rule)) return replayBtc(rule, await storedFiveMinute(db, from), now);
-  return replaySports(rule, await loadPastGames(db, from, now), now);
+  return replaySports(rule, await loadPastGames(db, from, now, rule.scope.league[0]), now);
 }
 
 export async function runHunch(
@@ -57,12 +57,14 @@ export async function runHunch(
     type: "step",
     text: isBtcRule(compiled.rule)
       ? "Replaying 7 days of 5-minute BTC candles"
-      : "Replaying 7 days of NBA games against stored prices",
+      : compiled.rule.scope.league[0] === "SENATE"
+        ? "Replaying the last 7 days of resolved Senate races"
+        : "Replaying 7 days of NBA games against stored prices",
   });
   const replay = await replayRule(db, compiled.rule, now);
   await emit({
     type: "step",
-    text: `${replay.considered} ${isBtcRule(compiled.rule) ? "windows" : "games"} checked · ${replay.fires} fires`,
+    text: `${replay.considered} ${isBtcRule(compiled.rule) ? "windows" : compiled.rule.scope.league[0] === "SENATE" ? "races" : "games"} checked · ${replay.fires} fires`,
   });
   await emit({ type: "replay", replay });
 }

@@ -1,22 +1,33 @@
-import type { MarketSource } from "../compiler/rule.ts";
 import type { Db } from "../db/client.ts";
 import type { Snapshot } from "./evaluate.ts";
 import type { PastGame } from "./replay.ts";
 
 interface SnapshotRow {
   event_id: string;
-  source: MarketSource;
+  source: string;
   home_prob: number;
   at: Date;
   kind: Snapshot["kind"];
 }
 
-export async function loadPastGames(db: Db, from: Date, to: Date): Promise<PastGame[]> {
+export async function loadPastGames(
+  db: Db,
+  from: Date,
+  to: Date,
+  league: "NBA" | "SENATE" = "NBA",
+): Promise<PastGame[]> {
   const events = await db<
-    { id: string; home: string; away: string; starts_at: Date; winner: "home" | "away" }[]
+    {
+      id: string;
+      title: string;
+      home: string;
+      away: string;
+      starts_at: Date;
+      winner: "home" | "away";
+    }[]
   >`
-    select id, home, away, starts_at, winner from events
-    where league = 'NBA' and status = 'post' and winner is not null
+    select id, coalesce(title, away || ' @ ' || home) as title, home, away, starts_at, winner from events
+    where league = ${league} and status = 'post' and winner is not null
       and starts_at >= ${from} and starts_at < ${to}
     order by starts_at`;
   if (events.length === 0) return [];
@@ -31,6 +42,7 @@ export async function loadPastGames(db: Db, from: Date, to: Date): Promise<PastG
   }
   return events.map((e) => ({
     id: e.id,
+    title: e.title,
     home: e.home,
     away: e.away,
     startsAt: e.starts_at,

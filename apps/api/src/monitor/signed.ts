@@ -6,6 +6,7 @@ import type { Db } from "../db/client.ts";
 
 export interface SignedPickInput {
   address: string;
+  market: "nba-ml" | "senate-winner";
   ruleId: string | null;
   version: number | null;
   eventId: string;
@@ -75,7 +76,7 @@ export async function createSignedPick(
     rule: input.ruleId,
     version: input.version,
     event: input.eventId,
-    market: "nba-ml",
+    market: input.market,
     side: input.side,
     team: input.team,
     confidence: Math.round(input.confidence * 10_000) / 10_000,
@@ -91,7 +92,7 @@ export async function createSignedPick(
   await db`
     insert into picks (id, owner, rule_id, version, stage, market, side, confidence, why, inputs,
                        picked_at, expires_at, event_id, address, delegation_id, payload, hash, signature, agent)
-    values (${pickId}, ${`sui:${input.address}`}, ${input.ruleId}, ${input.version}, 'on_record', 'nba-ml',
+    values (${pickId}, ${`sui:${input.address}`}, ${input.ruleId}, ${input.version}, 'on_record', ${input.market},
             ${input.side}, ${payload.confidence}, ${input.why}, ${db.json(input.seen)}, ${now}, ${input.lock},
             ${input.eventId}, ${input.address}, ${delegation.id}, ${db.json(payload)}, ${hash}, ${signature},
             ${agent.address})`;

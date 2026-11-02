@@ -7,7 +7,6 @@ import { rememberAnchoredPicks } from "../memory/lines.ts";
 import { submitAnchor } from "./chain.ts";
 import { buildTree } from "./merkle.ts";
 
-const BATCH_EVERY_MS = 10 * 60_000;
 const BEFORE_LOCK_MS = 15 * 60_000;
 
 export interface AnchorDeps {
@@ -15,6 +14,7 @@ export interface AnchorDeps {
   signer: Keypair;
   packageId: string;
   network: "testnet" | "localnet";
+  everyMs: number;
 }
 
 interface Leaf {
@@ -42,11 +42,15 @@ async function unanchored(db: Db): Promise<Leaf[]> {
   return rows.map((r) => ({ pickId: r.id, kind: r.kind, hash: r.hash, lock: r.lock, at: r.at }));
 }
 
-export function batchDue(leaves: { lock: Date; at: Date }[], now: Date): boolean {
+export function batchDue(
+  leaves: { lock: Date; at: Date }[],
+  now: Date,
+  everyMs = 10 * 60_000,
+): boolean {
   if (leaves.length === 0) return false;
   const oldest = Math.min(...leaves.map((l) => l.at.getTime()));
   const soonestLock = Math.min(...leaves.map((l) => l.lock.getTime()));
-  return now.getTime() - oldest >= BATCH_EVERY_MS || soonestLock - now.getTime() <= BEFORE_LOCK_MS;
+  return now.getTime() - oldest >= everyMs || soonestLock - now.getTime() <= BEFORE_LOCK_MS;
 }
 
 export async function pendingLeaves(db: Db): Promise<number> {
@@ -61,7 +65,7 @@ export async function runAnchorBatch(
 ): Promise<string | undefined> {
   if (!deps) return undefined;
   const leaves = await unanchored(db);
-  if (!batchDue(leaves, now)) return undefined;
+  if (!batchDue(leaves, now, deps.everyMs)) return undefined;
   const tree = buildTree(leaves.map((l) => l.hash));
   const id = newId("a");
   await db.begin(async (tx) => {

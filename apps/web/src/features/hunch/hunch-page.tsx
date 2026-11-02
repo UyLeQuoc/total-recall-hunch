@@ -16,6 +16,7 @@ export function HunchPage() {
   const hunch = useHunch(visitor);
   const practice = usePractice(visitor);
   const [draft, setDraft] = useState("");
+  const [recordedId, setRecordedId] = useState<string | null>(null);
 
   const ask = (text: string) => {
     setDraft(text);
@@ -59,9 +60,18 @@ export function HunchPage() {
             </p>
           )}
           {hunch.problem && <p className="text-[15px] leading-[1.9] text-ink-2">{hunch.problem}</p>}
-          {hunch.rule && <RuleCard card={hunch.rule.card} compiledBy={hunch.rule.compiledBy} />}
+          {hunch.rule && (
+            <RuleCard
+              card={
+                recordedId === hunch.rule.id
+                  ? { ...hunch.rule.card, stage: "on record" }
+                  : hunch.rule.card
+              }
+              compiledBy={hunch.rule.compiledBy}
+            />
+          )}
           {hunch.rule && hunch.replay && (
-            <ReplayView replay={hunch.replay} isBtc={hunch.rule.isBtc} />
+            <ReplayView replay={hunch.replay} kind={hunch.rule.kind} />
           )}
           {hunch.rule && (
             <RecordActions
@@ -69,6 +79,7 @@ export function HunchPage() {
               practiceBusy={practice.status === "starting" || practice.status === "live"}
               onPractice={() => void practice.start(hunch.rule?.isBtc ? hunch.rule.id : undefined)}
               onEdit={() => hunch.reset()}
+              onRecorded={() => setRecordedId(hunch.rule?.id ?? null)}
             />
           )}
           {practice.status !== "idle" || practice.problem ? (

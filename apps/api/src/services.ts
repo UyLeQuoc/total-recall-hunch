@@ -30,6 +30,7 @@ export function buildServices(db: Db, env: Env, log: Logger): Services {
           signer: signerFromSuiPrivateKey(env.SUI_SPONSOR_KEY),
           packageId: env.HUNCH_PACKAGE_ID,
           network: env.SUI_LOCALNET_GRPC ? ("localnet" as const) : ("testnet" as const),
+          everyMs: env.ANCHOR_EVERY_MIN * 60_000,
         }
       : undefined;
   return {
