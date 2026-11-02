@@ -106,17 +106,25 @@ export async function currentTrust(
   const byText = new Map(local.map((l) => [l.text, l]));
   let source = local.map((l) => ({ text: l.text, blobId: l.blobId }));
   if (op) {
+    const cached = recalled.get(ctx);
+    const refresh = async () => {
+      const lines = await recallLines(op, NAMESPACE.trust, `TRUST voice ${ctx} n brier`);
+      recalled.set(ctx, { at: Date.now(), lines });
+      return lines;
+    };
     try {
-      const cached = recalled.get(ctx);
-      const fresh =
-        cached && Date.now() - cached.at <= RECALL_CACHE_MS
-          ? cached
-          : {
-              at: Date.now(),
-              lines: await recallLines(op, NAMESPACE.trust, `TRUST voice ${ctx} n brier`),
-            };
-      recalled.set(ctx, fresh);
-      if (fresh.lines.length > 0) source = fresh.lines;
+      if (!cached) {
+        const lines = await refresh();
+        if (lines.length > 0) source = lines;
+      } else {
+        if (Date.now() - cached.at > RECALL_CACHE_MS) {
+          recalled.set(ctx, { ...cached, at: Date.now() });
+          refresh().catch((err: unknown) =>
+            log.warn("trust recall failed, keeping the last one", { reason: String(err) }),
+          );
+        }
+        if (cached.lines.length > 0) source = cached.lines;
+      }
     } catch (err) {
       log.warn("trust recall failed, using Postgres copies", { reason: String(err) });
     }

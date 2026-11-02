@@ -7,6 +7,9 @@ tests them honestly. Hunch turns a hunch into a rule you can read, replays it, t
 every pick is logged before lock with a proof on Sui, every morning every voice is scored, and Walrus
 Memory keeps who was right, on what. A rule that beats the market it bet against earns **Proven**.
 
+**Live: https://testyourhunch.vercel.app** (the API runs on Railway;
+[ADR-0016](docs/adr/0016-deploy-railway-and-vercel.md)).
+
 A Track 1 entry (Markets & Sports Prediction) to the
 [Walrus × Tatum "Total Recall" hackathon](https://recall-tatum-walrus.vercel.app). Not a sportsbook: no
 deposits, no wagering, no real money.

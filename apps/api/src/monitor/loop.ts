@@ -7,7 +7,8 @@ import { ingestSenate } from "../ingest/senate.ts";
 import { flushMemories } from "../memory/walrus.ts";
 import { rememberNewlyProven } from "../score/proven.ts";
 import { resolveSportsPicks } from "../score/resolve.ts";
-import { writeTrustSnapshots } from "../score/trust.ts";
+import { currentTrust, writeTrustSnapshots } from "../score/trust.ts";
+import { CONTEXT } from "../score/voices.ts";
 import type { Services } from "../services.ts";
 import { resolveDuePicks } from "./practice.ts";
 import { runRecordMonitor } from "./record.ts";
@@ -38,6 +39,14 @@ export function startLoops(s: Services): void {
   every("anchor", 60 * SECOND, log, () => runAnchorBatch(db, s.anchor, log));
   every("meter", 60 * SECOND, log, () => persistUsage(db));
   every("memory", 30 * SECOND, log, () => flushMemories(db, s.memory, log));
+  if (s.memory) {
+    every("trust-recall", 60 * SECOND, log, () =>
+      Promise.all([
+        currentTrust(db, s.memory, log, CONTEXT.NBA),
+        currentTrust(db, s.memory, log, CONTEXT.SENATE),
+      ]),
+    );
+  }
   every("score", 5 * 60 * SECOND, log, async () => {
     await resolveSportsPicks(db);
     await writeTrustSnapshots(db, log);

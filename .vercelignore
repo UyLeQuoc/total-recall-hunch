@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+.localnet
+**/node_modules
+**/dist
+**/.turbo
+packages/move/**/build

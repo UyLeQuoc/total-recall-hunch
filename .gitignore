@@ -15,3 +15,6 @@ packages/move/**/build/
 
 # A throwaway Sui localnet (bun run localnet)
 .localnet/
+
+# Vercel CLI link
+.vercel/
