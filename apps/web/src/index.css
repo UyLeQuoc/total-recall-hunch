@@ -1,0 +1,176 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line-strong: var(--line-strong);
+  --color-hit: var(--hit);
+  --color-miss: var(--miss);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: #f7f7f7;
+  --foreground: #1f2023;
+  --card: #ffffff;
+  --card-foreground: #1f2023;
+  --popover: #ffffff;
+  --popover-foreground: #1f2023;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #55575d;
+  --muted: #efeff1;
+  --muted-foreground: #8e9097;
+  --accent: rgba(20, 22, 28, 0.055);
+  --accent-foreground: #1f2023;
+  --destructive: #c4483e;
+  --border: #e2e3e6;
+  --input: #cfd1d5;
+  --ring: #cfd1d5;
+  --ink-2: #55575d;
+  --ink-3: #8e9097;
+  --line-strong: #cfd1d5;
+  --hit: #2f8a5b;
+  --miss: #c4483e;
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #141416;
+    --foreground: #ececef;
+    --card: #1d1e22;
+    --card-foreground: #ececef;
+    --popover: #1d1e22;
+    --popover-foreground: #ececef;
+    --primary: #ffffff;
+    --primary-foreground: #000000;
+    --secondary: #1d1e22;
+    --secondary-foreground: #b4b6bc;
+    --muted: #1b1c20;
+    --muted-foreground: #7d8088;
+    --accent: rgba(255, 255, 255, 0.065);
+    --accent-foreground: #ececef;
+    --destructive: #ec7a70;
+    --border: #2a2c31;
+    --input: #3a3d43;
+    --ring: #3a3d43;
+    --ink-2: #b4b6bc;
+    --ink-3: #7d8088;
+    --line-strong: #3a3d43;
+    --hit: #5fc08c;
+    --miss: #ec7a70;
+    color-scheme: dark;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html,
+  body {
+    min-height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    background: var(--foreground);
+    color: var(--background);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes slot-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes shimmer-text {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@utility animate-fade-up {
+  animation: fade-up 320ms var(--ease) both;
+}
+
+@utility animate-slot-in {
+  animation: slot-in 480ms var(--ease) both;
+}
+
+@utility shimmer {
+  background-image: linear-gradient(90deg, var(--ink-3) 35%, var(--foreground) 50%, var(--ink-3) 65%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-text 1.4s linear infinite;
+}
+
+@utility ascii {
+  container-type: inline-size;
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+@utility ascii-art {
+  margin: 0;
+  white-space: pre;
+  line-height: 1.15;
+  font-size: clamp(6px, calc(100cqw / (var(--cols) * 0.6)), 12px);
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

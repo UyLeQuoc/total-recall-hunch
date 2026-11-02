@@ -1,0 +1,6 @@
+[package]
+name = "hunch"
+edition = "2024"
+license = "MIT"
+
+[dependencies]

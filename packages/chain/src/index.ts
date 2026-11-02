@@ -4,6 +4,7 @@
  */
 export * from "./fallback.ts";
 export * from "./funds.ts";
+export * from "./local.ts";
 export * from "./log.ts";
 export * from "./paced.ts";
 export * from "./retry.ts";

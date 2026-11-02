@@ -1,0 +1,60 @@
+import { z } from "zod";
+import { getJson } from "./http.ts";
+
+const jsonList = z
+  .string()
+  .transform((s) => JSON.parse(s) as unknown)
+  .pipe(z.array(z.union([z.string(), z.number()]).transform(String)));
+
+const eventsSchema = z.array(
+  z.object({
+    markets: z.array(
+      z.object({
+        sportsMarketType: z.string().nullish(),
+        outcomes: jsonList,
+        outcomePrices: jsonList.optional(),
+        clobTokenIds: jsonList.optional(),
+      }),
+    ),
+  }),
+);
+
+const historySchema = z.object({ history: z.array(z.object({ t: z.number(), p: z.number() })) });
+
+export interface PolymarketGame {
+  homeProb: number;
+  homeToken: string | undefined;
+}
+
+export async function fetchGame(
+  slug: string,
+  homeName: string,
+): Promise<PolymarketGame | undefined> {
+  const events = await getJson(
+    `https://gamma-api.polymarket.com/events?slug=${encodeURIComponent(slug)}`,
+    eventsSchema,
+  );
+  const market = events[0]?.markets.find((m) => m.sportsMarketType === "moneyline");
+  if (!market) return undefined;
+  const named = market.outcomes.findIndex((o) => o.toLowerCase() === homeName.toLowerCase());
+  const homeIndex = named >= 0 ? named : 1;
+  const price = Number(market.outcomePrices?.[homeIndex]);
+  return {
+    homeProb: price,
+    homeToken: market.clobTokenIds?.[homeIndex],
+  };
+}
+
+export async function fetchHistory(
+  token: string,
+  from: Date,
+  to: Date,
+): Promise<{ at: Date; p: number }[]> {
+  const startTs = Math.floor(from.getTime() / 1000);
+  const endTs = Math.floor(to.getTime() / 1000);
+  const data = await getJson(
+    `https://clob.polymarket.com/prices-history?market=${token}&startTs=${startTs}&endTs=${endTs}&fidelity=5`,
+    historySchema,
+  );
+  return data.history.map((h) => ({ at: new Date(h.t * 1000), p: h.p }));
+}

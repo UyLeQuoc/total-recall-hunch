@@ -225,9 +225,12 @@ sees, what Hunch does, and the requirement that builds it (§7).
 ### 6.1 Try it, no wallet
 
 - The landing page leads with "What's your hunch?" and three examples:
-  - "When the books and Polymarket disagree by 5+ points on an NBA game, the books are right."
-  - "On Senate races, Kalshi is sharper than Polymarket when they split by 5+ points."
+  - "When the books and Polymarket disagree by 2+ points on an NBA game, the books are right."
+  - "On NBA games, Kalshi is sharper than the books when they split by 2+ points."
   - "When BTC rises more than 0.3% in 5 minutes, it keeps rising for the next 5."
+- The NBA examples say 2+ points because, measured on Nov 2 over the week's 49 games, the books and
+  Polymarket were never 5 points apart 30 minutes before tip-off
+  ([ADR-0008](adr/0008-first-runnable-slice.md)). An election example returns with the election ingest.
 - A visitor's rules run in practice. Signing in keeps them, and their picks, under the visitor's name.
 
 ### 6.2 The rule card and the ladder
