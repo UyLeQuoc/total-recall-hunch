@@ -11,4 +11,4 @@ COPY packages/memory packages/memory
 COPY apps/api apps/api
 ENV NODE_ENV=production
 USER bun
-CMD ["bun", "apps/api/src/main.ts"]
+CMD ["bun", "--smol", "apps/api/src/main.ts"]
