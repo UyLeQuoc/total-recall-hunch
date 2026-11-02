@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hunch
+      POSTGRES_PASSWORD: hunch
+      POSTGRES_DB: hunch
+    ports:
+      - "5437:5432"
+    volumes:
+      - hunch_pg:/var/lib/postgresql/data
+volumes:
+  hunch_pg:

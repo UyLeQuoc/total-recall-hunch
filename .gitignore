@@ -1,0 +1,14 @@
+# Secrets and local state
+.env
+.env.*
+!.env.example
+node_modules/
+.DS_Store
+dist/
+.turbo/
+
+# Agent progress notes
+NOTES.md
+
+# Move build output
+packages/move/**/build/
