@@ -116,8 +116,10 @@ export function LearningPage() {
                     {m.status === "written" && m.blobId
                       ? `on Walrus · blob ${m.blobId}`
                       : m.status === "pending"
-                        ? "queued for Walrus Memory (no account key yet)"
-                        : m.status}
+                        ? "queued for Walrus Memory"
+                        : m.status === "test"
+                          ? "kept here: a test account's line never goes to Walrus"
+                          : m.status}
                   </span>
                 </li>
               ))}

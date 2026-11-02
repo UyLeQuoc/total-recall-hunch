@@ -32,6 +32,7 @@ async function pickObservations(db: Db): Promise<Observation[]> {
     }[]
   >`select p.rule_id, p.version, p.address, p.confidence, p.outcome, p.picked_at, e.league
     from picks p join events e on e.id = p.event_id
+      join delegations d on d.id = p.delegation_id and d.test = false
     where p.stage = 'on_record' and p.outcome is not null and p.retracted_at is null`;
   return rows.map((r) => ({
     voice: r.rule_id ? `rule:${r.rule_id}@v${r.version ?? 1}` : `person:${r.address ?? "unknown"}`,
@@ -64,7 +65,9 @@ export async function writeTrustSnapshots(db: Db, log: Logger, now = new Date())
   for (const g of games) {
     const prices = pricesAtLock(g);
     const y = g.winner === "home" ? 1 : 0;
-    const entries = Object.entries(prices).filter((e): e is [string, number] => e[1] !== undefined);
+    const entries = Object.entries(prices)
+      .filter((e): e is [string, number] => e[1] !== undefined && !e[0].startsWith("book:"))
+      .sort((x, y) => x[0].localeCompare(y[0]));
     for (let i = 0; i < entries.length; i++) {
       for (let j = i + 1; j < entries.length; j++) {
         const a = entries[i];

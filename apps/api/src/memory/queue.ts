@@ -15,10 +15,11 @@ export async function queueMemory(
   namespace: string,
   text: string,
   idempotencyKey: string,
+  status: "pending" | "test" = "pending",
 ): Promise<void> {
   const id = `m_${sha256Hex(idempotencyKey).slice(0, 16)}`;
   await db`insert into memories (id, namespace, text, idempotency_key, status)
-           values (${id}, ${namespace}, ${text}, ${idempotencyKey}, 'pending')
+           values (${id}, ${namespace}, ${text}, ${idempotencyKey}, ${status})
            on conflict (idempotency_key) do nothing`;
 }
 
