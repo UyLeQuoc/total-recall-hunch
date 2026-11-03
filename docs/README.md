@@ -8,3 +8,5 @@
 | [code-rules.md](code-rules.md)         | How code is written here. It outranks habit and nearby files                                                                 |
 | [event-rules.md](event-rules.md)       | The hackathon's rules, Track 1, judging, prizes and the submission form                                                      |
 | [product-feedback.md](product-feedback.md) | Proposed (Nov 3): one sentence starts the test, follow and learn loop; the order of work; fixes from the code review     |
+| [build-now.md](build-now.md)           | Proposed (Nov 3): what to build by Nov 9, day by day, and the price charts the demo needs                                     |
+| [landscape.md](landscape.md)           | Reference (Nov 3): who else builds memory and prediction agents, Track 1 rivals, and what Hunch can honestly claim            |
