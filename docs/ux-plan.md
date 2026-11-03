@@ -12,6 +12,19 @@ feature may add a line, a chart or a fold under that answer. It may not add a pa
 or a step before the answer. The look stays as [ADR-0009](adr/0009-the-look.md) set it: one prompt
 column, ASCII charts, Inter and Geist Mono.
 
+**Every new element is drawn in ASCII, like the rule card and the replay chart already are.** This is an
+enhancement of the current look, not a new one:
+
+| Element | Drawn as | Not as |
+| :--- | :--- | :--- |
+| Status of a pick | `[✓] before tip-off   [✓] signed   [ ] sui proof pending ⠋` in Geist Mono | Rounded pills or badges |
+| A timeline | `●` done, `○` next, `·` later, joined by `│` and `┊`, in one mono block | CSS dots and lines |
+| Prices and gaps | `█` and `░` bars, `▲` over the line, `┄┄` for the threshold, built with `lib/ascii/` | Chart libraries or SVG |
+| Progress to Proven | `PROVEN ░░░░░░░░░░ 6/20` | A progress bar component |
+| Summary facts | One mono line with `·` between facts | A row of chips |
+| A game on a phone | A dark block like the rule card, three mono lines | A styled card grid |
+| Buttons | The buttons the app already has (white, outlined, text) | New button styles |
+
 The concept screens are on a private design canvas (Hunch UX concepts) made for this review. It has
 three variants of the answer, the research card, a pick's proof, the return visit, and two phone
 screens, all drawn from real data the live API served on Nov 3 (`/api/games`, `/api/learning`, the NBA
@@ -66,11 +79,12 @@ Priority: **P0** for the demo and submission, **P1** if a day frees up, **P2** a
    gap against the user's line.
 4. **Why this call.** On the research card: trust per source (weight, Brier, games), weighted against
    plain average, and the memory lines it read. When the two numbers are the same, it says so.
-5. **Proof as chips.** A pick shows "✓ before tip-off · ✓ signed · Sui proof pending…", then "✓
-   verified on Sui" with a verify link. The full checks stay on `/p/<id>`.
+5. **Proof as a status line.** A pick shows `[✓] before tip-off   [✓] signed   [ ] sui proof pending`,
+   then `[✓] verified on sui` with a `verify →` link. The full checks stay on `/p/<id>`.
 6. **Since you asked.** Reopening a hunch starts with what changed and how sure it is, then the rows.
-7. **Tonight as cards on a phone.** Under 640 px wide, each game becomes a card with every price
-   visible. The table stays on desktop.
+7. **Tonight as mono blocks on a phone.** Under 640 px wide, each game becomes three mono lines (teams
+   and time, every price, gap bar and call) in a dark block like the rule card. The table stays on
+   desktop.
 8. **BTC on its own.** "See one scored now" leaves the NBA answer and becomes a "Try a five-minute BTC
    hunch" example.
 9. **Small fixes found on the way.** `/tonight` serves the tonight board (redirect or route alias); the
@@ -140,15 +154,16 @@ observation, no match yet, no history, ambiguous).
 
 ## 7. Checklist
 
-1. [ ] The answer in three lines, with Details folding the rule card and the replay.
-2. [ ] Following starts on send; "Stop following" is the only control.
-3. [ ] NEXT names the next game and time, or what it is waiting for.
-4. [ ] The live split card, and the gap chart near a check.
-5. [ ] "Why this call" with weights, Brier, sample sizes, weighted against plain, memory links.
-6. [ ] Proof chips on every pick, and the timeline on `/p/<id>`.
-7. [ ] "Since you asked" on a returning visit.
-8. [ ] Tonight as cards under 640 px.
-9. [ ] BTC as its own example, out of the NBA answer.
-10. [ ] `/tonight` works as a link.
-11. [ ] Every item in §6 tried and passing, with desktop (1280 × 800) and phone (390 × 844) before and
+1. [ ] Every new element follows the ASCII table at the top: no pills, CSS dots or chart libraries.
+2. [ ] The answer in three lines, with Details folding the rule card and the replay.
+3. [ ] Following starts on send; "Stop following" is the only control.
+4. [ ] NEXT names the next game and time, or what it is waiting for.
+5. [ ] The live split card, and the gap chart near a check.
+6. [ ] "Why this call" with weights, Brier, sample sizes, weighted against plain, memory links.
+7. [ ] The proof status line on every pick, and the timeline on `/p/<id>`.
+8. [ ] "Since you asked" on a returning visit.
+9. [ ] Tonight as mono blocks under 640 px.
+10. [ ] BTC as its own example, out of the NBA answer.
+11. [ ] `/tonight` works as a link.
+12. [ ] Every item in §6 tried and passing, with desktop (1280 × 800) and phone (390 × 844) before and
     after screenshots and a recorded walkthrough in the PR that builds it.
