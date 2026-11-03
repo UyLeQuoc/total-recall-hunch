@@ -7,3 +7,4 @@
 | [tech-reference.md](tech-reference.md) | Walrus Memory, Tatum and Sui: APIs, endpoints, and what the relayer and the gateway actually do                              |
 | [code-rules.md](code-rules.md)         | How code is written here. It outranks habit and nearby files                                                                 |
 | [event-rules.md](event-rules.md)       | The hackathon's rules, Track 1, judging, prizes and the submission form                                                      |
+| [product-feedback.md](product-feedback.md) | Proposed (Nov 3): one sentence starts the test, follow and learn loop; the order of work; fixes from the code review     |
