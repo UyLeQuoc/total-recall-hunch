@@ -10,6 +10,7 @@ interface ResearchCardProps {
   game: Game;
   pickedId: string | undefined;
   problem: string | null;
+  picking: boolean;
   onPick: (side: "home" | "away", confidence: number) => void;
 }
 
@@ -19,7 +20,7 @@ const NAME: Record<string, string> = {
   kalshi: "kalshi",
 };
 
-export function ResearchCard({ game, pickedId, problem, onPick }: ResearchCardProps) {
+export function ResearchCard({ game, pickedId, problem, picking, onPick }: ResearchCardProps) {
   const { account } = useAccount();
   const call = game.call;
   const [side, setSide] = useState<"home" | "away">(call && call.homeProb < 0.5 ? "away" : "home");
@@ -118,7 +119,7 @@ export function ResearchCard({ game, pickedId, problem, onPick }: ResearchCardPr
               />
               %
             </label>
-            <Button type="submit" size="xs">
+            <Button type="submit" size="xs" disabled={picking}>
               Log it on record
             </Button>
             <span className="text-[12px] text-ink-3">

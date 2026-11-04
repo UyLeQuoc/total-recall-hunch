@@ -58,6 +58,7 @@ export function useGames() {
   const [problem, setProblem] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string>>({});
   const [pickProblem, setPickProblem] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -78,6 +79,7 @@ export function useGames() {
   const pick = useCallback(
     async (eventId: string, side: "home" | "away", confidence: number) => {
       setPickProblem(null);
+      setPicking(true);
       try {
         const res = await fetchJson("/api/picks", pickSchema, {
           method: "POST",
@@ -87,10 +89,12 @@ export function useGames() {
         setPicked((p) => ({ ...p, [eventId]: res.pickId }));
       } catch (err) {
         setPickProblem(err instanceof ApiError ? err.message : "The pick didn't go through.");
+      } finally {
+        setPicking(false);
       }
     },
     [visitor],
   );
 
-  return { games, problem, picked, pickProblem, pick, reload: load };
+  return { games, problem, picked, pickProblem, picking, pick, reload: load };
 }

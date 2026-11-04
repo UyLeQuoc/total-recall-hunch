@@ -28,7 +28,7 @@ function short(address: string): string {
 
 export function MePage() {
   const { account, signOut } = useAccount();
-  const { me, problem, undo, pauseAll } = useMe(account !== null);
+  const { me, problem, undoing, undo, pauseAll } = useMe(account !== null);
   const now = useNow(30_000, true);
 
   if (!account) {
@@ -84,6 +84,7 @@ export function MePage() {
                     <button
                       type="button"
                       className="font-mono text-xs text-miss"
+                      disabled={undoing === pick.id}
                       onClick={() => void undo(pick.id)}
                     >
                       undo before {WHEN.format(new Date(pick.lock))}

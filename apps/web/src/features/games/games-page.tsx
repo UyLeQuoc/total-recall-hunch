@@ -47,6 +47,7 @@ interface GameTableProps {
   onToggle: (id: string) => void;
   picked: Record<string, string>;
   pickProblem: string | null;
+  picking: boolean;
   onPick: (eventId: string, side: "home" | "away", confidence: number) => void;
 }
 
@@ -59,6 +60,7 @@ function GameTable({
   onToggle,
   picked,
   pickProblem,
+  picking,
   onPick,
 }: GameTableProps) {
   return (
@@ -116,6 +118,7 @@ function GameTable({
                     game={g}
                     pickedId={picked[g.id]}
                     problem={pickProblem}
+                    picking={picking}
                     onPick={(side, confidence) => onPick(g.id, side, confidence)}
                   />
                 </TableCell>
@@ -129,7 +132,7 @@ function GameTable({
 }
 
 export function GamesPage() {
-  const { games, problem, picked, pickProblem, pick } = useGames();
+  const { games, problem, picked, pickProblem, picking, pick } = useGames();
   const [open, setOpen] = useState<string | null>(null);
   const toggle = (id: string) => setOpen((o) => (o === id ? null : id));
   const nba = games?.filter((g) => g.league === "NBA") ?? [];
@@ -171,6 +174,7 @@ export function GamesPage() {
           onToggle={toggle}
           picked={picked}
           pickProblem={pickProblem}
+          picking={picking}
           onPick={onPick}
         />
       )}
@@ -185,6 +189,7 @@ export function GamesPage() {
             onToggle={toggle}
             picked={picked}
             pickProblem={pickProblem}
+            picking={picking}
             onPick={onPick}
           />
         </div>

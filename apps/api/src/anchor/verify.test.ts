@@ -100,4 +100,32 @@ describe("checkPick", () => {
     }));
     expect(verdict(checks)).toBe("failed");
   });
+
+  const DELEGATION = "Under the owner's delegation";
+  const ZKLOGIN_SIGNATURE = Buffer.from([0x05, 1, 2, 3]).toString("base64");
+
+  it("accepts a zkLogin delegation once Sui confirms its signer", async () => {
+    const pick = await signedPick();
+    if (!pick.delegation) throw new Error("expected a delegation");
+    pick.delegation.signature = ZKLOGIN_SIGNATURE;
+    const owner = String(pick.payload.owner);
+    const checks = await checkPick(pick, undefined, undefined, async () => owner);
+    expect(checks.find((c) => c.name === DELEGATION)?.ok).toBe(true);
+  });
+
+  it("waits, rather than fails, when a zkLogin signature can't be re-checked", async () => {
+    const pick = await signedPick();
+    if (!pick.delegation) throw new Error("expected a delegation");
+    pick.delegation.signature = ZKLOGIN_SIGNATURE;
+    const checks = await checkPick(pick, undefined, undefined, async () => null);
+    expect(checks.find((c) => c.name === DELEGATION)?.ok).toBeNull();
+    expect(verdict(checks)).toBe("pending");
+  });
+
+  it("fails an ordinary signature that doesn't verify", async () => {
+    const pick = await signedPick();
+    const checks = await checkPick(pick, undefined, undefined, async () => null);
+    expect(checks.find((c) => c.name === DELEGATION)?.ok).toBe(false);
+    expect(verdict(checks)).toBe("failed");
+  });
 });

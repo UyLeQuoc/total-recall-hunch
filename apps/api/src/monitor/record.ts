@@ -108,7 +108,7 @@ export async function runRecordMonitor(
       if (r.rule.scope.league[0] !== event.league) continue;
       const already = await db<{ id: string }[]>`
         select id from picks where rule_id = ${r.id} and version = ${r.version} and event_id = ${event.id}
-          and retracted_at is null limit 1`;
+        limit 1`;
       if (already[0]) continue;
       const verdict = evaluateSports(r.rule, now, event.starts_at, snapshots);
       if (!verdict.fired) {

@@ -1,4 +1,5 @@
 import { addressFromSignature } from "@hunch/memory";
+import type { ClientWithCoreApi } from "@mysten/sui/client";
 import { endOfDay, parseDelegation } from "../auth/delegation.ts";
 import type { Db } from "../db/client.ts";
 import type { AnchorRead } from "./chain.ts";
@@ -32,6 +33,28 @@ export interface LoadedPick {
   retraction: { payload: { [key: string]: Json }; hash: string; signature: string } | undefined;
 }
 
+export type RecoverSigner = (message: string, signature: string) => Promise<string | null>;
+
+const ZKLOGIN_FLAG = 0x05;
+
+function isZkLogin(signature: string): boolean {
+  return Buffer.from(signature, "base64")[0] === ZKLOGIN_FLAG;
+}
+
+const recovered = new Map<string, string>();
+
+export function recoverWith(client: ClientWithCoreApi | undefined): RecoverSigner {
+  if (!client) return addressFromSignature;
+  return async (message, signature) => {
+    const key = `${message}\n${signature}`;
+    const known = recovered.get(key);
+    if (known) return known;
+    const signer = await addressFromSignature(message, signature, client);
+    if (signer) recovered.set(key, signer);
+    return signer;
+  };
+}
+
 function str(v: Json | undefined): string {
   return typeof v === "string" ? v : "";
 }
@@ -40,6 +63,7 @@ export async function checkPick(
   p: LoadedPick,
   read: ((digest: string) => Promise<AnchorRead>) | undefined,
   unavailable = "no Sui client configured (Tatum key)",
+  recover: RecoverSigner = addressFromSignature,
 ): Promise<Check[]> {
   const checks: Check[] = [];
   const lock = new Date(str(p.payload.lock));
@@ -72,18 +96,20 @@ export async function checkPick(
     });
   } else {
     const terms = parseDelegation(p.delegation.message);
-    const delegator = await addressFromSignature(p.delegation.message, p.delegation.signature);
-    const ok =
+    const delegator = await recover(p.delegation.message, p.delegation.signature);
+    const covered =
       terms !== undefined &&
-      delegator === owner &&
       terms.address === owner &&
       terms.agent === agent &&
       at <= endOfDay(terms.until);
+    const ok = covered && delegator === owner;
+    const uncheckable = covered && delegator === null && isZkLogin(p.delegation.signature);
     checks.push({
       name: "Under the owner's delegation",
-      ok,
-      detail:
-        ok && terms
+      ok: uncheckable ? null : ok,
+      detail: uncheckable
+        ? "a zkLogin signature needs Sui to re-check it, and that read isn't available right now"
+        : ok && terms
           ? `${owner.slice(0, 10)}… allowed ${terms.perDay} a day until ${terms.until}`
           : "the delegation doesn't cover this pick",
     });
