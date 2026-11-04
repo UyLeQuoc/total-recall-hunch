@@ -1,10 +1,10 @@
 # What to build now (Nov 3 to Nov 9)
 
-| Field      | Value                                                                                                        |
-| ---------- | ------------------------------------------------------------------------------------------------------------ |
-| **Date**   | Nov 3, 2026 (six days before the planned submission on Nov 9; the hard deadline is Nov 10, 17:00 UTC)        |
-| **From**   | Harry Phan, after the review in [product-feedback.md](product-feedback.md)                                   |
-| **Status** | Proposed. The owner picks what goes in; each accepted change gets an ADR (AGENTS.md)                        |
+| Field      | Value                                                                                                 |
+| ---------- | ----------------------------------------------------------------------------------------------------- |
+| **Date**   | Nov 3, 2026 (six days before the planned submission on Nov 9; the hard deadline is Nov 10, 17:00 UTC) |
+| **From**   | Harry Phan, after the review in [product-feedback.md](product-feedback.md)                            |
+| **Status** | Proposed. The owner picks what goes in; each accepted change gets an ADR (AGENTS.md)                  |
 
 [product-feedback.md](product-feedback.md) says what Hunch should feel like. This doc turns it into a
 build list for the six days that are left, and adds one thing the demo is missing: **showing the
@@ -16,14 +16,14 @@ in ASCII, built from `apps/web/src/lib/ascii/`.
 
 ## 1. What exists today
 
-| Surface | What it draws | Where |
-| :--- | :--- | :--- |
+| Surface         | What it draws                                                                  | Where                                                   |
+| :-------------- | :----------------------------------------------------------------------------- | :------------------------------------------------------ |
 | Tonight's board | Each source's home price and an 8 character sparkline of its last 24 snapshots | `features/games/games-page.tsx:29`, `ingest/board.ts:7` |
-| Research card | Today's prices from each source, side by side as meters | `features/games/research-card.tsx:40` |
-| Replay | Picks per day (right and wrong) and Brier of the rule against its market | `components/replay-view.tsx:33` |
-| BTC practice | One minute candles, with the entry price marked | `features/hunch/practice-turn.tsx:34` |
-| Learning | Each voice's score over time as a line chart | `features/learning/learning-page.tsx:26` |
-| Thinking | A radar frame while the hunch compiles | `features/hunch/thinking.tsx` |
+| Research card   | Today's prices from each source, side by side as meters                        | `features/games/research-card.tsx:40`                   |
+| Replay          | Picks per day (right and wrong) and Brier of the rule against its market       | `components/replay-view.tsx:33`                         |
+| BTC practice    | One minute candles, with the entry price marked                                | `features/hunch/practice-turn.tsx:34`                   |
+| Learning        | Each voice's score over time as a line chart                                   | `features/learning/learning-page.tsx:26`                |
+| Thinking        | A radar frame while the hunch compiles                                         | `features/hunch/thinking.tsx`                           |
 
 The data behind a real price chart is already stored: `snapshots (event_id, source, home_prob, at,
 kind)` keeps every price from every source (`apps/api/src/db/migrate.ts:20`). Nothing reads it back as a
@@ -158,15 +158,15 @@ If the anchor lands after the lock, the row says so in plain words (product-feed
 Each day ends with something a judge could see. The PRD's plan (§14) is the baseline; this reorders the
 last six days around the loop in product-feedback §10.
 
-| Day | Build | Done when |
-| :--- | :--- | :--- |
-| **Nov 3** | The "fix now" items in product-feedback §11 that touch today's record (Slush verify, Undo, duplicate picks, the Polymarket home side, picks after tip-off). Get the Senate and tonight's NBA picks on record | The picks made today verify, with no duplicates |
-| **Nov 4** | The aligned time buckets and `GET /api/games/:id/prices`; the line movement chart (2.1) on the research card and the proof page | A pick's marker sits at its signed time on a three source chart |
-| **Nov 5** | One sentence starts following: no "Put it on record" step for observing (product-feedback §1 to §3). The "what happens next" line. The gap chart (2.2) in the first answer | A new hunch says what it is watching, and the gap chart shows when it fires |
-| **Nov 6** | Trust under the call (2.4), weighted against plain average, each bar citing its memory line (product-feedback §4 and §5) | A call cites the memory that moved it, or says the memory didn't change it |
-| **Nov 7** | The running Brier replay (2.3), the proof timeline (2.6), the BTC window (2.5). Record the video | The demo flow in product-feedback §10 runs end to end on real records |
-| **Nov 8** | The "before submission" fixes in product-feedback §11, the README's Submission section, the blog post and the X post | Published |
-| **Nov 9** | Submit | The form is in |
+| Day       | Build                                                                                                                                                                                                        | Done when                                                                   |
+| :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------- |
+| **Nov 3** | The "fix now" items in product-feedback §11 that touch today's record (Slush verify, Undo, duplicate picks, the Polymarket home side, picks after tip-off). Get the Senate and tonight's NBA picks on record | The picks made today verify, with no duplicates                             |
+| **Nov 4** | The aligned time buckets and `GET /api/games/:id/prices`; the line movement chart (2.1) on the research card and the proof page                                                                              | A pick's marker sits at its signed time on a three source chart             |
+| **Nov 5** | One sentence starts following: no "Put it on record" step for observing (product-feedback §1 to §3). The "what happens next" line. The gap chart (2.2) in the first answer                                   | A new hunch says what it is watching, and the gap chart shows when it fires |
+| **Nov 6** | Trust under the call (2.4), weighted against plain average, each bar citing its memory line (product-feedback §4 and §5)                                                                                     | A call cites the memory that moved it, or says the memory didn't change it  |
+| **Nov 7** | The running Brier replay (2.3), the proof timeline (2.6), the BTC window (2.5). Record the video                                                                                                             | The demo flow in product-feedback §10 runs end to end on real records       |
+| **Nov 8** | The "before submission" fixes in product-feedback §11, the README's Submission section, the blog post and the X post                                                                                         | Published                                                                   |
+| **Nov 9** | Submit                                                                                                                                                                                                       | The form is in                                                              |
 
 **Not now:** trading on DeepBook Predict (H13), more markets, paper positions. They add scope without
 making the core loop easier to believe.

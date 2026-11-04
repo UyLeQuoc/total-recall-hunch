@@ -1,9 +1,9 @@
 # Product feedback: one sentence starts the whole loop
 
-| Field      | Value                                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------------------ |
-| **Date**   | Nov 3, 2026                                                                                            |
-| **From**   | Harry Phan (review of the live demo and of `main` at `7556db7`)                                        |
+| Field      | Value                                                                                                      |
+| ---------- | ---------------------------------------------------------------------------------------------------------- |
+| **Date**   | Nov 3, 2026                                                                                                |
+| **From**   | Harry Phan (review of the live demo and of `main` at `7556db7`)                                            |
 | **Status** | Proposed. Nothing here is decided until the owner accepts it; each accepted change gets an ADR (AGENTS.md) |
 
 **The user only says a hunch. Hunch tests it and keeps following it.** Nobody should have to understand
@@ -51,10 +51,10 @@ Every line comes from real data. "Watching" appears only once the follow has act
 
 Start following a hunch the moment it is sent. Following is observing and scoring: no bet, no money.
 
-| The user is                    | Hunch does on its own                                                                       |
-| ------------------------------ | ------------------------------------------------------------------------------------------- |
-| Not signed in                  | Keeps the hunch in the visitor session, replays it, watches its conditions, logs observations and results |
-| Signed in with a valid delegation | Also signs picks and builds proofs, within the scope the user allowed (H5)               |
+| The user is                       | Hunch does on its own                                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Not signed in                     | Keeps the hunch in the visitor session, replays it, watches its conditions, logs observations and results |
+| Signed in with a valid delegation | Also signs picks and builds proofs, within the scope the user allowed (H5)                                |
 
 Don't ask a visitor to sign before they see the value. If they want a record tied to their wallet, ask
 for the delegation once, at the right moment, then run within it.
@@ -134,10 +134,10 @@ That is the depth: **Hunch helps the user test what they believe, even when the 
 A memory dump does not prove learning, and a tiny improvement does not prove Hunch got smarter. The demo
 picks one real, traceable example:
 
-| Before                                 | New evidence                         | After                            |
-| -------------------------------------- | ------------------------------------ | -------------------------------- |
-| Not enough data to prefer a source     | More finished games, scored          | Trust is updated                 |
-| The call uses the old weights          | The new memory is saved and read back | The next call uses the new weights |
+| Before                             | New evidence                          | After                              |
+| ---------------------------------- | ------------------------------------- | ---------------------------------- |
+| Not enough data to prefer a source | More finished games, scored           | Trust is updated                   |
+| The call uses the old weights      | The new memory is saved and read back | The next call uses the new weights |
 
 If the call comes out the same, say so:
 
@@ -224,18 +224,18 @@ hunch live. Label which is the earlier record and which just started.
 
 ## 9. Minimal still holds when the data doesn't cooperate
 
-| Situation                    | Behaviour                                                                          |
-| ---------------------------- | ---------------------------------------------------------------------------------- |
-| The hunch is ambiguous       | Ask one question, only if the readings would test different things (H1)            |
-| It isn't supported           | Say what is in scope and offer the closest wording that can be tested              |
-| There is no history          | Build no result; start following from now                                          |
-| A source is missing          | Say which one; draw no comparison                                                  |
-| No game matches yet          | Keep waiting and say what it is waiting for                                        |
-| A price is stale             | Make no pick from it                                                               |
-| Memory can't be read         | Say a fallback is in use; don't claim the call rests on memory                     |
-| The chain hasn't verified    | Stay pending and retry on its own                                                  |
-| The user edits the hunch     | Keep the old history and start a new version; never rewrite results (H2)           |
-| The user leaves the page     | What was saved keeps running on the server                                         |
+| Situation                 | Behaviour                                                                |
+| ------------------------- | ------------------------------------------------------------------------ |
+| The hunch is ambiguous    | Ask one question, only if the readings would test different things (H1)  |
+| It isn't supported        | Say what is in scope and offer the closest wording that can be tested    |
+| There is no history       | Build no result; start following from now                                |
+| A source is missing       | Say which one; draw no comparison                                        |
+| No game matches yet       | Keep waiting and say what it is waiting for                              |
+| A price is stale          | Make no pick from it                                                     |
+| Memory can't be read      | Say a fallback is in use; don't claim the call rests on memory           |
+| The chain hasn't verified | Stay pending and retry on its own                                        |
+| The user edits the hunch  | Keep the old history and start a new version; never rewrite results (H2) |
+| The user leaves the page  | What was saved keeps running on the server                               |
 
 This is the depth that has to sit behind one minimal screen.
 

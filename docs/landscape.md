@@ -1,10 +1,10 @@
 # Who else builds memory and prediction agents (Nov 3, 2026)
 
-| Field      | Value                                                                                       |
-| ---------- | ------------------------------------------------------------------------------------------- |
-| **Date**   | Nov 3, 2026                                                                                 |
-| **From**   | Harry Phan, desk research (web, X search snippets, GitHub, arXiv)                           |
-| **Status** | Reference. It informs [build-now.md](build-now.md) §4; it decides nothing on its own        |
+| Field      | Value                                                                                |
+| ---------- | ------------------------------------------------------------------------------------ |
+| **Date**   | Nov 3, 2026                                                                          |
+| **From**   | Harry Phan, desk research (web, X search snippets, GitHub, arXiv)                    |
+| **Status** | Reference. It informs [build-now.md](build-now.md) §4; it decides nothing on its own |
 
 **In short:** nobody ships the whole Hunch loop. That loop is a plain sentence, a replay against the
 market, following it live, picks signed before lock with a Sui anchor through Tatum, and per source
@@ -27,14 +27,14 @@ reported unless a source says otherwise.
 
 ## 2. Agents with real users trade, but none learn which source to trust
 
-| Product | What it does | Memory | Proof of picks |
-| :--- | :--- | :--- | :--- |
-| Public (Sept 25, 2026) | Plain words become an agent that trades on Kalshi; sports not listed | No | No |
-| TurbineFi | Plain English becomes a strategy, backtested on about four weeks of Kalshi books, then a cloud bot (1,593 bots, self reported) | No | No |
-| Olas Polystrat | Autonomous Polymarket agents; claims 33% profitable against about 16% of users (self reported) | "Improving", unspecified | No |
-| CloddsBot (about 3.1k stars) | Self hosted Claude terminal over ten venues | Semantic memory and a calibration ledger, with no stated effect on behaviour | No |
-| PropsBot | Prediction market prices against sportsbook lines | No | No |
-| Foresight Arena (arXiv 2605.00420) | AI agents commit forecasts on Polygon and are scored by Brier against Polymarket | No | Commit and reveal |
+| Product                            | What it does                                                                                                                   | Memory                                                                       | Proof of picks    |
+| :--------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------- | :---------------- |
+| Public (Sept 25, 2026)             | Plain words become an agent that trades on Kalshi; sports not listed                                                           | No                                                                           | No                |
+| TurbineFi                          | Plain English becomes a strategy, backtested on about four weeks of Kalshi books, then a cloud bot (1,593 bots, self reported) | No                                                                           | No                |
+| Olas Polystrat                     | Autonomous Polymarket agents; claims 33% profitable against about 16% of users (self reported)                                 | "Improving", unspecified                                                     | No                |
+| CloddsBot (about 3.1k stars)       | Self hosted Claude terminal over ten venues                                                                                    | Semantic memory and a calibration ledger, with no stated effect on behaviour | No                |
+| PropsBot                           | Prediction market prices against sportsbook lines                                                                              | No                                                                           | No                |
+| Foresight Arena (arXiv 2605.00420) | AI agents commit forecasts on Polygon and are scored by Brier against Polymarket                                               | No                                                                           | Commit and reveal |
 
 **No product outside the hackathon weights sportsbooks, Polymarket and Kalshi by their measured
 accuracy.** Kalshi's only agent ("Harrison") is internal.
@@ -48,13 +48,13 @@ standard fix people ask for is picks timestamped before the game, which is Hunch
 The prize pool is $4,500: three tracks at $1,000 each ($500, $300, $200), plus three $500 awards (Best
 Walrus Memory, Best Tatum AI Builder app, Best Use of Agent Payments). Public Track 1 repos found:
 
-| Rival | Idea | Proof on Sui | Trust mechanic | State seen |
-| :--- | :--- | :--- | :--- | :--- |
-| Hindsight ([neromtoobad](https://github.com/neromtoobad/hindsight)) | Five AI agents, public prices and humans call the same markets | Each bet mints a `Ticket` with a hash of its reasoning, on mainnet | Brier, credibility and lessons per agent; x402 paid API | Live demo, 26 commits |
-| [WalRecall](https://github.com/0x-zeze/WalRecall) | Forecaster credibility matrix feeding a consensus | Checkpoint anchor at intake | Weights bounded 0.40x to 2.40x | Live demo, 86 commits |
-| [Walkback](https://github.com/joyboy-sats/walkback) | Market claims from X posts; wrong sources get demoted | Checked against mainnet | Wilson lower bound, muted under 0.40 | Live demo, 29 commits |
-| [Veto](https://github.com/SammyCodes1/Veto) | Books against Polymarket; stops logging where the closing line record is poor | A pick counts only after Tatum reads it back before close | Mainnet memory | Live demo, 8 commits |
-| [Tuition](https://github.com/valeriusxix/Tuition) | Crypto forecaster that writes a lesson after each miss | Not described | Planned memory on and off test | Scaffold |
+| Rival                                                               | Idea                                                                          | Proof on Sui                                                       | Trust mechanic                                          | State seen            |
+| :------------------------------------------------------------------ | :---------------------------------------------------------------------------- | :----------------------------------------------------------------- | :------------------------------------------------------ | :-------------------- |
+| Hindsight ([neromtoobad](https://github.com/neromtoobad/hindsight)) | Five AI agents, public prices and humans call the same markets                | Each bet mints a `Ticket` with a hash of its reasoning, on mainnet | Brier, credibility and lessons per agent; x402 paid API | Live demo, 26 commits |
+| [WalRecall](https://github.com/0x-zeze/WalRecall)                   | Forecaster credibility matrix feeding a consensus                             | Checkpoint anchor at intake                                        | Weights bounded 0.40x to 2.40x                          | Live demo, 86 commits |
+| [Walkback](https://github.com/joyboy-sats/walkback)                 | Market claims from X posts; wrong sources get demoted                         | Checked against mainnet                                            | Wilson lower bound, muted under 0.40                    | Live demo, 29 commits |
+| [Veto](https://github.com/SammyCodes1/Veto)                         | Books against Polymarket; stops logging where the closing line record is poor | A pick counts only after Tatum reads it back before close          | Mainnet memory                                          | Live demo, 8 commits  |
+| [Tuition](https://github.com/valeriusxix/Tuition)                   | Crypto forecaster that writes a lesson after each miss                        | Not described                                                      | Planned memory on and off test                          | Scaffold              |
 
 Three more (a second Hindsight, MarketRecallAI, SUIX5) showed up only in search snippets.
 
@@ -103,15 +103,15 @@ that recovered all 8 beliefs. A measured before and after beats a claim.
 
 ## 7. How close anything comes
 
-| Product | Plain words | Replay | Live follow | Signed before lock, anchored | Per source trust in memory, cited |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| Hindsight (neromtoobad) | No | Not stated | Partly | Yes, mainnet | Scores agents and prices |
-| WalRecall | No | Not stated | Not stated | Checkpoint anchor | Bounded weights |
-| TurbineFi | Yes | Yes | Yes | No | No |
-| Public | Yes | No | Yes | No | No |
-| Foresight Arena | No | No | Rounds | Yes, Polygon | Brier against market, no memory |
-| CloddsBot | Chat | Yes | Yes | No | Memory, no stated feedback |
-| **Hunch** | **Yes** | **Yes, 7 days** | **Yes** | **Yes, Sui testnet via Tatum** | **Yes, with citation** |
+| Product                 | Plain words | Replay          | Live follow | Signed before lock, anchored   | Per source trust in memory, cited |
+| :---------------------- | :---------- | :-------------- | :---------- | :----------------------------- | :-------------------------------- |
+| Hindsight (neromtoobad) | No          | Not stated      | Partly      | Yes, mainnet                   | Scores agents and prices          |
+| WalRecall               | No          | Not stated      | Not stated  | Checkpoint anchor              | Bounded weights                   |
+| TurbineFi               | Yes         | Yes             | Yes         | No                             | No                                |
+| Public                  | Yes         | No              | Yes         | No                             | No                                |
+| Foresight Arena         | No          | No              | Rounds      | Yes, Polygon                   | Brier against market, no memory   |
+| CloddsBot               | Chat        | Yes             | Yes         | No                             | Memory, no stated feedback        |
+| **Hunch**               | **Yes**     | **Yes, 7 days** | **Yes**     | **Yes, Sui testnet via Tatum** | **Yes, with citation**            |
 
 Outside the hackathon, products have either the flow or the proof, never both. Inside it, rivals have
 proof and trust without the plain sentence and the replay. Hunch's position is the join.
