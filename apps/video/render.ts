@@ -1,7 +1,7 @@
 /**
  * Renders the film: bundles film/, serves it with the measured data and the live screens, steps time frame
  * by frame in headless Chromium, encodes with ffmpeg, and mixes the music bed with the film's sound cues.
- *   bun render.ts                   → out/hunch.mp4 (1080p60)
+ *   bun render.ts                   → out/hunch.mp4 (1080p60, 120 s, with the score from score.ts)
  *   bun render.ts --stills 3,20.5   → .build/stills/*.png
  *   bun render.ts --fps 30 --workers 6
  * Needs .build/data.json (bun data.ts), .build/shots (bun shots.ts) and ffmpeg.
@@ -11,6 +11,7 @@ import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } 
 import http from "node:http";
 import { basename, extname, join } from "node:path";
 import { chromium, type Page } from "playwright";
+import { renderScore } from "./score.ts";
 import { library, mixCues, SR } from "./sfx.ts";
 
 const HERE = new URL(".", import.meta.url).pathname;
@@ -172,11 +173,19 @@ try {
       segments.map((f) => `file '${f}'`).join("\n"),
     );
 
-    const fx = mixCues(cues, duration, library(HERE));
+    const fx = mixCues(cues, duration, library(), 0.4);
     const fxFile = join(BUILD, "sfx.f32");
     writeFileSync(fxFile, Buffer.from(fx.buffer));
+    const music = renderScore();
+    const stereo = new Float32Array(music.l.length * 2);
+    for (let i = 0; i < music.l.length; i++) {
+      stereo[2 * i] = music.l[i] ?? 0;
+      stereo[2 * i + 1] = music.r[i] ?? 0;
+    }
+    const scoreFile = join(BUILD, "score.f32");
+    writeFileSync(scoreFile, Buffer.from(stereo.buffer));
     mkdirSync(join(HERE, "out"), { recursive: true });
-    const fadeAt = (duration - 3.5).toFixed(2);
+    const fadeAt = (duration - 2).toFixed(2);
     const mux = ffmpeg([
       "-f",
       "concat",
@@ -184,8 +193,14 @@ try {
       "0",
       "-i",
       join(BUILD, "segments", "list.txt"),
+      "-f",
+      "f32le",
+      "-ar",
+      String(SR),
+      "-ac",
+      "2",
       "-i",
-      join(HERE, "assets", "audio", "bed.mp3"),
+      scoreFile,
       "-f",
       "f32le",
       "-ar",
@@ -195,7 +210,7 @@ try {
       "-i",
       fxFile,
       "-filter_complex",
-      `[1:a]atrim=0:${duration.toFixed(3)},afade=t=in:d=0.3,afade=t=out:st=${fadeAt}:d=3.5,volume=0.8[m];[2:a]aformat=channel_layouts=stereo[f];[m][f]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]`,
+      `[1:a]atrim=0:${duration.toFixed(3)},afade=t=out:st=${fadeAt}:d=2[m];[2:a]aformat=channel_layouts=stereo[f];[m][f]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[a]`,
       "-map",
       "0:v",
       "-map",

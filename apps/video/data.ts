@@ -18,7 +18,12 @@ const HUNCH =
 const PICK = "p_0q47076d2o6c5t5e";
 
 const cite = z.object({ voice: z.string(), n: z.number(), brier: z.number(), blobId: z.string() });
-const price = z.object({ source: z.string(), homeProb: z.number(), fresh: z.boolean() });
+const price = z.object({
+  source: z.string(),
+  homeProb: z.number(),
+  fresh: z.boolean(),
+  series: z.array(z.number()),
+});
 const game = z.object({
   id: z.string(),
   league: z.string(),
@@ -29,6 +34,7 @@ const game = z.object({
   awayName: z.string(),
   startsAt: z.string(),
   status: z.string(),
+  gap: z.object({ pts: z.number() }).nullable(),
   prices: z.array(price),
   books: z.array(z.object({ book: z.string(), homeProb: z.number() })),
   call: z
@@ -168,6 +174,7 @@ const data = {
   measuredAt: new Date().toISOString(),
   hunch,
   featured,
+  board: nba,
   cites: [...cites.values()],
   curve: learned.curve,
   voices: learned.voices,

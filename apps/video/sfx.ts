@@ -1,8 +1,6 @@
 /**
- * Sound effects for the showreel: synthesised here, plus the three in assets/audio. Mono, 48 kHz, float.
+ * The film's sound effects, all synthesised here. Mono, 48 kHz, float.
  */
-import { execFileSync } from "node:child_process";
-import { join } from "node:path";
 
 export const SR = 48_000;
 
@@ -205,19 +203,33 @@ function synth(): Record<string, Float32Array> {
   return { tick, type, impact, riser, coin, swish, blip, shimmer, thud, glitch };
 }
 
-function decode(file: string): Float32Array {
-  const buf = execFileSync(
-    "ffmpeg",
-    ["-loglevel", "error", "-i", file, "-ac", "1", "-ar", String(SR), "-f", "f32le", "-"],
-    { maxBuffer: 64 * 1024 * 1024 },
-  );
-  return new Float32Array(buf.buffer, buf.byteOffset, buf.length / 4).slice();
-}
-
-export function library(root: string): Record<string, Float32Array> {
+export function library(): Record<string, Float32Array> {
   const lib = synth();
-  for (const name of ["pop", "whoosh", "ding"])
-    lib[name] = decode(join(root, "assets", "audio", `${name}.wav`));
+  lib.pop = mix([
+    glide(
+      0.09,
+      (t) => 900 * Math.exp(-t / 0.03) + 380,
+      (t) => Math.exp(-t / 0.025) * Math.min(1, t / 0.002),
+    ),
+    0.8,
+  ]);
+  lib.whoosh = (() => {
+    const d = 0.5;
+    const n = noise(d, 21);
+    const band = onePole(n, (t) => 400 + 4000 * Math.sin(Math.PI * (t / d)));
+    const low = onePole(n, (t) => 150 + 900 * Math.sin(Math.PI * (t / d)));
+    return make(
+      d,
+      (t, i) => ((band[i] ?? 0) - (low[i] ?? 0)) * Math.sin(Math.PI * (t / d)) ** 2 * 1.4,
+    );
+  })();
+  lib.ding = make(1.2, (t) =>
+    [1318.5, 1975.5, 2637].reduce(
+      (acc, f, k) =>
+        acc + Math.sin(2 * Math.PI * f * t) * Math.exp(-t / (0.5 - k * 0.12)) * (0.3 - k * 0.07),
+      0,
+    ),
+  );
   return lib;
 }
 

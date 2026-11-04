@@ -1,6 +1,6 @@
 # ADR-0018: The demo film is rendered from code, on measured numbers
 
-- **Status:** Accepted
+- **Status:** Accepted; the look and the sound are superseded by [ADR-0019](0019-showreel-in-hunchs-own-look.md)
 - **Date:** 2026-11-04
 - **Deciders:** Uy ("vidoe của hunch kìa")
 
