@@ -60,6 +60,7 @@ export function useMe(signedIn: boolean) {
   const visitor = useVisitor();
   const [me, setMe] = useState<Me | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const [undoing, setUndoing] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!signedIn) {
@@ -93,13 +94,16 @@ export function useMe(signedIn: boolean) {
   );
 
   const undo = useCallback(
-    (pickId: string) =>
-      act(() =>
+    async (pickId: string) => {
+      setUndoing(pickId);
+      await act(() =>
         fetchJson(`/api/picks/${pickId}/undo`, undoSchema, {
           method: "POST",
           headers: authHeaders(visitor),
         }),
-      ),
+      );
+      setUndoing(null);
+    },
     [act, visitor],
   );
 
@@ -114,5 +118,5 @@ export function useMe(signedIn: boolean) {
     [act, visitor],
   );
 
-  return { me, problem, undo, pauseAll, reload: load };
+  return { me, problem, undoing, undo, pauseAll, reload: load };
 }

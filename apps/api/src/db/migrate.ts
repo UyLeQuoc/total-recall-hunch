@@ -1,5 +1,13 @@
 import type { Db } from "./client.ts";
 
+// Duplicates picked before these indexes existed must not stop the API from booting.
+function uniqueIndex(name: string, definition: string): string {
+  return `do $$ begin
+    create unique index if not exists ${name} on ${definition};
+  exception when unique_violation then null;
+  end $$`;
+}
+
 const STATEMENTS = [
   `create table if not exists events (
     id text primary key,
@@ -172,6 +180,14 @@ const STATEMENTS = [
     calls int not null,
     primary key (day, method)
   )`,
+  uniqueIndex(
+    "picks_one_by_hand",
+    "picks (address, event_id) where stage = 'on_record' and rule_id is null and retracted_at is null",
+  ),
+  uniqueIndex(
+    "picks_one_by_rule",
+    "picks (rule_id, version, event_id) where stage = 'on_record' and rule_id is not null and retracted_at is null",
+  ),
 ];
 
 export async function migrate(db: Db): Promise<void> {

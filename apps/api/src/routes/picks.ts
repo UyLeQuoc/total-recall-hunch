@@ -2,7 +2,14 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { readAnchor } from "../anchor/chain.ts";
 import { usageToday } from "../anchor/meter.ts";
-import { cachedOnly, cachedRead, checkPick, loadForVerify, verdict } from "../anchor/verify.ts";
+import {
+  cachedOnly,
+  cachedRead,
+  checkPick,
+  loadForVerify,
+  recoverWith,
+  verdict,
+} from "../anchor/verify.ts";
 import { loadMe } from "../auth/me.ts";
 import { manualPick } from "../monitor/manual.ts";
 import { retractPick } from "../monitor/signed.ts";
@@ -103,6 +110,7 @@ export function pickRoutes(s: Services): Hono {
       loaded,
       read,
       overBudget ? "Tatum's daily credit budget is spent; the read waits for tomorrow" : undefined,
+      recoverWith(overBudget ? undefined : sui),
     );
     return c.json({
       pick,

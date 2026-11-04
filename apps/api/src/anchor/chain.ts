@@ -19,6 +19,7 @@ export interface AnchorReceipt {
   digest: string;
   rootHex: string;
   count: number;
+  settled: boolean;
 }
 
 export type AnchorRead =
@@ -116,8 +117,11 @@ export async function submitAnchor(
     throw new Error(`the anchor transaction failed: ${error}`);
   }
   const digest = result.Transaction.digest;
-  await client.waitForTransaction({ digest });
-  return { digest, rootHex: toHex(root), count };
+  const settled = await client.waitForTransaction({ digest }).then(
+    () => true,
+    () => false,
+  );
+  return { digest, rootHex: toHex(root), count, settled };
 }
 
 function isNotFound(err: unknown): boolean {

@@ -8,6 +8,9 @@ import { submitAnchor } from "./chain.ts";
 import { buildTree } from "./merkle.ts";
 
 const BEFORE_LOCK_MS = 15 * 60_000;
+const STUCK_MS = 15 * 60_000;
+const FIRST_RETRY_MS = 2 * 60_000;
+const LONGEST_RETRY_MS = 15 * 60_000;
 
 export interface AnchorDeps {
   client: SuiGrpcClient;
@@ -53,6 +56,34 @@ export function batchDue(
   return now.getTime() - oldest >= everyMs || soonestLock - now.getTime() <= BEFORE_LOCK_MS;
 }
 
+export function retryWaitMs(failures: number): number {
+  if (failures <= 0) return 0;
+  return Math.min(FIRST_RETRY_MS * 2 ** (failures - 1), LONGEST_RETRY_MS);
+}
+
+export function failuresInARow(newestFirst: { status: string }[]): number {
+  const stop = newestFirst.findIndex((a) => a.status !== "failed");
+  return stop === -1 ? newestFirst.length : stop;
+}
+
+async function releaseStuckBatches(db: Db, now: Date, log: Logger): Promise<void> {
+  const released = await db<{ id: string }[]>`
+    update anchors set status = 'failed', error = 'stopped before it finished'
+    where status = 'pending' and created_at < ${new Date(now.getTime() - STUCK_MS)}
+    returning id`;
+  for (const { id } of released) {
+    log.warn("anchor batch was stuck; its picks go in the next batch", { anchor: id });
+  }
+}
+
+async function waitingToRetry(db: Db, now: Date): Promise<boolean> {
+  const recent = await db<{ status: string; created_at: Date }[]>`
+    select status, created_at from anchors order by created_at desc limit 4`;
+  const newest = recent[0];
+  if (!newest) return false;
+  return now.getTime() - newest.created_at.getTime() < retryWaitMs(failuresInARow(recent));
+}
+
 export async function pendingLeaves(db: Db): Promise<number> {
   return (await unanchored(db)).length;
 }
@@ -64,8 +95,10 @@ export async function runAnchorBatch(
   now = new Date(),
 ): Promise<string | undefined> {
   if (!deps) return undefined;
+  await releaseStuckBatches(db, now, log);
   const leaves = await unanchored(db);
   if (!batchDue(leaves, now, deps.everyMs)) return undefined;
+  if (await waitingToRetry(db, now)) return undefined;
   const tree = buildTree(leaves.map((l) => l.hash));
   const id = newId("a");
   await db.begin(async (tx) => {
@@ -78,9 +111,16 @@ export async function runAnchorBatch(
   });
   let digest: string;
   try {
-    digest = (
-      await submitAnchor(deps.client, deps.signer, deps.packageId, tree.root, leaves.length)
-    ).digest;
+    const receipt = await submitAnchor(
+      deps.client,
+      deps.signer,
+      deps.packageId,
+      tree.root,
+      leaves.length,
+    );
+    digest = receipt.digest;
+    if (!receipt.settled)
+      log.warn("anchor executed but hasn't settled yet", { anchor: id, digest });
   } catch (err) {
     await db`update anchors set status = 'failed', error = ${String(err).slice(0, 300)} where id = ${id}`;
     log.warn("anchor failed; the picks wait for the next batch", {

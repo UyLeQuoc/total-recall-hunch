@@ -26,6 +26,15 @@ export interface PolymarketGame {
   homeToken: string | undefined;
 }
 
+export function homeOutcomeIndex(outcomes: string[], homeName: string): number | undefined {
+  const home = homeName.toLowerCase();
+  const named = outcomes.flatMap((outcome, index) => {
+    const o = outcome.toLowerCase();
+    return o === home || o.endsWith(` ${home}`) || home.endsWith(` ${o}`) ? [index] : [];
+  });
+  return named.length === 1 ? named[0] : undefined;
+}
+
 export async function fetchGame(
   slug: string,
   homeName: string,
@@ -36,9 +45,10 @@ export async function fetchGame(
   );
   const market = events[0]?.markets.find((m) => m.sportsMarketType === "moneyline");
   if (!market) return undefined;
-  const named = market.outcomes.findIndex((o) => o.toLowerCase() === homeName.toLowerCase());
-  const homeIndex = named >= 0 ? named : 1;
+  const homeIndex = homeOutcomeIndex(market.outcomes, homeName);
+  if (homeIndex === undefined) return undefined;
   const price = Number(market.outcomePrices?.[homeIndex]);
+  if (!Number.isFinite(price)) return undefined;
   return {
     homeProb: price,
     homeToken: market.clobTokenIds?.[homeIndex],

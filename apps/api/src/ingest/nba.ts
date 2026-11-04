@@ -115,6 +115,8 @@ export async function ingestNba(
         if (pm) {
           await addSnapshot(db, id, "polymarket", pm.homeProb, now, "live");
           written++;
+        } else {
+          log.warn("polymarket has no moneyline matching the home team", { event: id });
         }
       } catch (err) {
         log.warn("polymarket unavailable", { event: id, reason: String(err) });

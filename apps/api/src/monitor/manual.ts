@@ -16,10 +16,14 @@ export async function manualPick(
   confidence: number,
   now = new Date(),
 ): Promise<SignedResult | { ok: false; status: 404; reason: string }> {
-  const events = await db<{ league: string; home: string; away: string; starts_at: Date }[]>`
-    select league, home, away, starts_at from events where id = ${eventId}`;
+  const events = await db<
+    { league: string; home: string; away: string; starts_at: Date; status: string }[]
+  >`select league, home, away, starts_at, status from events where id = ${eventId}`;
   const event = events[0];
   if (!event) return { ok: false, status: 404, reason: "No game has that id." };
+  if (event.status !== "pre") {
+    return { ok: false, status: 409, reason: "That game has locked. Picks close at tip-off." };
+  }
   const rows = await db<{ source: MarketSource; home_prob: number; at: Date }[]>`
     select source, home_prob, at from snapshots
     where event_id = ${eventId} and kind = 'live' and at > ${new Date(now.getTime() - 2 * 3_600_000)}`;

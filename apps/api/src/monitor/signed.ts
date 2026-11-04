@@ -45,60 +45,68 @@ export async function createSignedPick(
     };
   }
   const today = utcDayStart(now);
-  const counts = await db<{ owner_today: number; rule_today: number; same: number }[]>`
-    select
-      count(*) filter (where address = ${input.address} and picked_at >= ${today})::int as owner_today,
-      count(*) filter (where rule_id is not distinct from ${input.ruleId}
-                         and version is not distinct from ${input.version}
-                         and picked_at >= ${today})::int as rule_today,
-      count(*) filter (where event_id = ${input.eventId} and retracted_at is null
-                         and (case when ${input.ruleId}::text is null then rule_id is null and address = ${input.address}
-                                   else rule_id = ${input.ruleId} and version = ${input.version} end))::int as same
-    from picks where stage = 'on_record'`;
-  const c = counts[0];
-  if (c && c.same > 0)
-    return { ok: false, status: 409, reason: "There's already a pick on this game." };
-  if (c && c.owner_today >= delegation.perDay) {
-    return {
-      ok: false,
-      status: 429,
-      reason: `Your delegation allows ${delegation.perDay} picks a day.`,
+  return db.begin(async (tx): Promise<SignedResult> => {
+    await tx`select pg_advisory_xact_lock(hashtextextended(${`picks:${input.address}`}, 0))`;
+    const counts = await tx<{ owner_today: number; rule_today: number; same: number }[]>`
+      select
+        count(*) filter (where address = ${input.address} and picked_at >= ${today})::int as owner_today,
+        count(*) filter (where rule_id is not distinct from ${input.ruleId}
+                           and version is not distinct from ${input.version}
+                           and picked_at >= ${today})::int as rule_today,
+        count(*) filter (where event_id = ${input.eventId}
+                           and (case when ${input.ruleId}::text is null
+                                     then rule_id is null and address = ${input.address} and retracted_at is null
+                                     else rule_id = ${input.ruleId} and version = ${input.version} end))::int as same
+      from picks where stage = 'on_record'`;
+    const c = counts[0];
+    if (c && c.same > 0)
+      return { ok: false, status: 409, reason: "There's already a pick on this game." };
+    if (c && c.owner_today >= delegation.perDay) {
+      return {
+        ok: false,
+        status: 429,
+        reason: `Your delegation allows ${delegation.perDay} picks a day.`,
+      };
+    }
+    if (c && input.limitPerDay !== null && c.rule_today >= input.limitPerDay) {
+      return {
+        ok: false,
+        status: 429,
+        reason: `This rule allows ${input.limitPerDay} picks a day.`,
+      };
+    }
+    const pickId = newId("p");
+    const payload: PickPayload = {
+      v: 1,
+      kind: "pick",
+      pick: pickId,
+      rule: input.ruleId,
+      version: input.version,
+      event: input.eventId,
+      market: input.market,
+      side: input.side,
+      team: input.team,
+      confidence: Math.round(input.confidence * 10_000) / 10_000,
+      seen: input.seen,
+      at: now.toISOString(),
+      lock: input.lock.toISOString(),
+      owner: input.address,
+      delegation: delegation.id,
+      agent: agent.address,
     };
-  }
-  if (c && input.limitPerDay !== null && c.rule_today >= input.limitPerDay) {
-    return { ok: false, status: 429, reason: `This rule allows ${input.limitPerDay} picks a day.` };
-  }
-  const pickId = newId("p");
-  const payload: PickPayload = {
-    v: 1,
-    kind: "pick",
-    pick: pickId,
-    rule: input.ruleId,
-    version: input.version,
-    event: input.eventId,
-    market: input.market,
-    side: input.side,
-    team: input.team,
-    confidence: Math.round(input.confidence * 10_000) / 10_000,
-    seen: input.seen,
-    at: now.toISOString(),
-    lock: input.lock.toISOString(),
-    owner: input.address,
-    delegation: delegation.id,
-    agent: agent.address,
-  };
-  const hash = hashPayload(payload);
-  const signature = await agent.sign(hash);
-  await db`
-    insert into picks (id, owner, rule_id, version, stage, market, side, confidence, why, inputs,
-                       picked_at, expires_at, event_id, address, delegation_id, payload, hash, signature, agent)
-    values (${pickId}, ${`sui:${input.address}`}, ${input.ruleId}, ${input.version}, 'on_record', ${input.market},
-            ${input.side}, ${payload.confidence}, ${input.why}, ${db.json(input.seen)}, ${now}, ${input.lock},
-            ${input.eventId}, ${input.address}, ${delegation.id}, ${db.json(payload)}, ${hash}, ${signature},
-            ${agent.address})`;
-  await db`insert into notifications (address, pick_id, text)
-           values (${input.address}, ${pickId}, ${`Picked ${input.team} ${Math.round(input.confidence * 100)}% · ${input.why}`})`;
-  return { ok: true, pickId };
+    const hash = hashPayload(payload);
+    const signature = await agent.sign(hash);
+    await tx`
+      insert into picks (id, owner, rule_id, version, stage, market, side, confidence, why, inputs,
+                         picked_at, expires_at, event_id, address, delegation_id, payload, hash, signature, agent)
+      values (${pickId}, ${`sui:${input.address}`}, ${input.ruleId}, ${input.version}, 'on_record', ${input.market},
+              ${input.side}, ${payload.confidence}, ${input.why}, ${tx.json(input.seen)}, ${now}, ${input.lock},
+              ${input.eventId}, ${input.address}, ${delegation.id}, ${tx.json(payload)}, ${hash}, ${signature},
+              ${agent.address})`;
+    await tx`insert into notifications (address, pick_id, text)
+             values (${input.address}, ${pickId}, ${`Picked ${input.team} ${Math.round(input.confidence * 100)}% · ${input.why}`})`;
+    return { ok: true, pickId };
+  });
 }
 
 export async function retractPick(
@@ -142,7 +150,9 @@ export async function retractPick(
   const signature = await agent.sign(hash);
   if ((await signedBy(hash, signature)) !== agent.address)
     throw new Error("the agent's signature didn't verify");
-  await db`update picks set retracted_at = ${now}, retraction = ${db.json({ payload, hash, signature })}
-           where id = ${pickId}`;
+  const updated = await db`
+    update picks set retracted_at = ${now}, retraction = ${db.json({ payload, hash, signature })}
+    where id = ${pickId} and retracted_at is null returning id`;
+  if (updated.length === 0) return { ok: false, status: 409, reason: "It's already undone." };
   return { ok: true, pickId };
 }
