@@ -6,39 +6,39 @@ this public repo. The deadline is **Nov 10, 2026, 17:00 UTC**.
 
 ## Checklist (event rules §5.1)
 
-| Requirement                                  | Status                                                                               |
-| -------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Walrus Memory integrated, writing on mainnet | ✅ 110 lines written (Nov 4)                                                         |
-| At least 10 memories on mainnet              | ✅ 110                                                                               |
-| Tatum RPC for onchain data                   | ✅ Every Sui call over Tatum's gRPC gateway; 8 anchor batches on testnet             |
-| Working demo and public repo                 | ✅ https://testyourhunch.vercel.app · https://github.com/UyLeQuoc/total-recall-hunch |
-| Short demo video (2–3 min)                   | ✅ https://youtu.be/gHsQ5GAh2VE (2:00)                                               |
-| Published blog post                          | ⏳ Draft in [blog.md](blog.md): publish it, then paste its URL below                 |
+| Requirement                                  | Status                                                                                                              |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Walrus Memory integrated, writing on mainnet | ✅ 110 lines written (Nov 4)                                                                                        |
+| At least 10 memories on mainnet              | ✅ 110                                                                                                              |
+| Tatum RPC for onchain data                   | ✅ Every Sui call over Tatum's gRPC gateway; 8 anchor batches on testnet                                            |
+| Working demo and public repo                 | ✅ https://testyourhunch.vercel.app · https://github.com/UyLeQuoc/total-recall-hunch                                |
+| Short demo video (2–3 min)                   | ✅ https://youtu.be/gHsQ5GAh2VE (2:00)                                                                              |
+| Published blog post                          | ✅ Published on DEV: https://dev.to/uylequoc/hunch-test-your-hunch-before-you-bet-1nc4 (source: [blog.md](blog.md)) |
 
 ## The form
 
-| Field                                                                  | Answer                                                                                      |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Email                                                                  | _fill in_                                                                                   |
-| Discord handle                                                         | _fill in_                                                                                   |
-| LinkedIn                                                               | _fill in_                                                                                   |
-| Telegram ID _(optional)_                                               | _fill in_                                                                                   |
-| How did you hear about this event?                                     | _pick one_: Walrus Socials, Tatum Socials, Ads, Hackathon Listings, Friends, Search, Others |
-| Which community or account did you hear about us through? _(optional)_ | _fill in_                                                                                   |
-| Is this your first Web3 project?                                       | _Yes / No_                                                                                  |
-| **Tatum ID**                                                           | _fill in_: dashboard.tatum.io → My Account → My Account Info                                |
-| **SUI address**                                                        | _fill in_: the submitter's wallet                                                           |
-| **Account ID (SUI)**                                                   | `0x183c52e8b1f698f685c7f190f7204ea32e0339b130c5fc1042273632d0817641`                        |
-| **MEMWAL_AGENT_ID**                                                    | `984413233c953f7181e56d6b9e9a6f3b5ebe1359761571fcef8daff41683dc06`                          |
-| Project description                                                    | See [below](#project-description)                                                           |
-| Short demo video                                                       | https://youtu.be/gHsQ5GAh2VE                                                                |
-| GitHub repo                                                            | https://github.com/UyLeQuoc/total-recall-hunch                                              |
-| How was your experience building with Walrus?                          | See [below](#experience-with-walrus)                                                        |
-| How was your experience building with the Tatum AI Builder?            | See [below](#experience-with-the-tatum-ai-builder)                                          |
-| Additional documentation _(optional)_                                  | _The blog post's URL_, plus https://github.com/UyLeQuoc/total-recall-hunch#readme           |
-| One bug or friction point with Walrus Memory _(optional)_              | See [below](#one-friction-point-with-walrus-memory)                                         |
-| Social post links _(optional)_                                         | _The X / LinkedIn post URLs_                                                                |
-| Checkbox                                                               | Tick it: 18+, Event Rules, Tatum Terms, Walrus ToS and Privacy Policy                       |
+| Field                                                                  | Answer                                                                                                                                        |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Email                                                                  | _fill in_                                                                                                                                     |
+| Discord handle                                                         | _fill in_                                                                                                                                     |
+| LinkedIn                                                               | _fill in_                                                                                                                                     |
+| Telegram ID _(optional)_                                               | _fill in_                                                                                                                                     |
+| How did you hear about this event?                                     | _pick one_: Walrus Socials, Tatum Socials, Ads, Hackathon Listings, Friends, Search, Others                                                   |
+| Which community or account did you hear about us through? _(optional)_ | _fill in_                                                                                                                                     |
+| Is this your first Web3 project?                                       | _Yes / No_                                                                                                                                    |
+| **Tatum ID**                                                           | _fill in_: dashboard.tatum.io → My Account → My Account Info                                                                                  |
+| **SUI address**                                                        | _fill in_: the submitter's wallet                                                                                                             |
+| **Account ID (SUI)**                                                   | `0x183c52e8b1f698f685c7f190f7204ea32e0339b130c5fc1042273632d0817641`                                                                          |
+| **MEMWAL_AGENT_ID**                                                    | `984413233c953f7181e56d6b9e9a6f3b5ebe1359761571fcef8daff41683dc06`                                                                            |
+| Project description                                                    | See [below](#project-description)                                                                                                             |
+| Short demo video                                                       | https://youtu.be/gHsQ5GAh2VE                                                                                                                  |
+| GitHub repo                                                            | https://github.com/UyLeQuoc/total-recall-hunch                                                                                                |
+| How was your experience building with Walrus?                          | See [below](#experience-with-walrus)                                                                                                          |
+| How was your experience building with the Tatum AI Builder?            | See [below](#experience-with-the-tatum-ai-builder)                                                                                            |
+| Additional documentation _(optional)_                                  | https://dev.to/uylequoc/hunch-test-your-hunch-before-you-bet-1nc4 (the blog post), plus https://github.com/UyLeQuoc/total-recall-hunch#readme |
+| One bug or friction point with Walrus Memory _(optional)_              | See [below](#one-friction-point-with-walrus-memory)                                                                                           |
+| Social post links _(optional)_                                         | _The X / LinkedIn post URLs_                                                                                                                  |
+| Checkbox                                                               | Tick it: 18+, Event Rules, Tatum Terms, Walrus ToS and Privacy Policy                                                                         |
 
 The Account ID is the `MemWalAccount` object on Sui mainnet. `MEMWAL_AGENT_ID` is the public key of the
 delegate key Hunch writes with. Both are public, onchain identifiers.
