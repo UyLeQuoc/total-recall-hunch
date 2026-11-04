@@ -31,7 +31,7 @@
   },
   "overrides": [
     {
-      "includes": ["apps/api/src/**", "apps/web/src/lib/rule-schemas.ts"],
+      "includes": ["apps/api/src/**", "apps/web/src/lib/rule-schemas.ts", "apps/video/data.ts"],
       "linter": {
         "rules": {
           "suspicious": {

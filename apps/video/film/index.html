@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Hunch — the film</title>
+<style>
+@font-face { font-family: 'Inter'; font-weight: 400; src: url(/fonts/inter-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 500; src: url(/fonts/inter-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 600; src: url(/fonts/inter-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 700; src: url(/fonts/inter-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 800; src: url(/fonts/inter-latin-800-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 900; src: url(/fonts/inter-latin-900-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Geist Mono'; font-weight: 400; src: url(/fonts/geist-mono-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Geist Mono'; font-weight: 500; src: url(/fonts/geist-mono-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: 'Geist Mono'; font-weight: 700; src: url(/fonts/geist-mono-latin-700-normal.woff2) format('woff2'); }
+
+:root {
+  --paper: #f7f7f7; --ink: #141416; --card: #ffffff; --muted: #efeff1; --line: #e2e3e6;
+  --ink2: #55575d; --ink3: #8e9097; --dcard: #1d1e22; --dline: #2c2d33; --dink2: #b4b6bc; --dink3: #7d8088;
+  --hit: #2f8a5b; --hit-d: #5fd39a; --miss: #c4483e; --miss-d: #ff7a6e; --sui: #4da2ff; --walrus: #7ce8d6;
+  --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #000; }
+body { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-feature-settings: 'cv11', 'ss01'; }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--paper); color: var(--ink); }
+.scene { position: absolute; inset: 0; overflow: hidden; }
+.cam { position: absolute; inset: 0; transform-origin: 50% 50%; }
+.c { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+.dark { color: #ececef; }
+.grain { position: absolute; inset: -40px; pointer-events: none; z-index: 50; opacity: .06; mix-blend-mode: multiply; background-size: 256px 256px; }
+.grain.on-dark { mix-blend-mode: screen; opacity: .045; }
+.vignette { position: absolute; inset: 0; pointer-events: none; z-index: 49; background: radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.16)); }
+.flash { position: absolute; inset: 0; z-index: 60; pointer-events: none; }
+.wipe { position: absolute; inset: 0; z-index: 61; pointer-events: none; }
+.glow { position: absolute; border-radius: 50%; filter: blur(90px); }
+.dots-bg { position: absolute; inset: -60px; background-image: radial-gradient(currentColor 1.2px, transparent 1.4px); background-size: 28px 28px; opacity: .07; }
+
+.kicker { font-family: var(--mono); font-size: 22px; letter-spacing: .22em; text-transform: uppercase; white-space: nowrap; color: var(--ink3); }
+.dark .kicker { color: var(--dink3); }
+.piece, .gap { display: inline-block; white-space: pre; }
+.mono { font-family: var(--mono); }
+.sub { font-weight: 500; letter-spacing: -0.02em; line-height: 1.25; color: var(--ink2); white-space: nowrap; }
+.dark .sub { color: var(--dink2); }
+.chip { font-family: var(--mono); background: var(--ink); color: var(--paper); padding: .06em .34em .1em; border-radius: .08em; white-space: nowrap; line-height: 1; }
+.dark .chip { background: #ececef; color: var(--ink); }
+.hit { color: var(--hit); } .dark .hit { color: var(--hit-d); }
+.miss { color: var(--miss); } .dark .miss { color: var(--miss-d); }
+.g3 { color: var(--ink3); } .dark .g3 { color: var(--dink3); }
+
+.quote { font-family: var(--mono); font-size: 44px; white-space: nowrap; color: #ececef; }
+.prompt { width: 1500px; min-height: 220px; border-radius: 28px; border: 2px solid var(--dline); background: var(--dcard); padding: 40px 120px 40px 52px; font-size: 52px; line-height: 1.32; letter-spacing: -0.015em; color: #ececef; }
+.prompt .ph { color: var(--dink3); }
+.caret { display: inline-block; width: 4px; height: 58px; background: #ececef; vertical-align: -10px; margin-left: 3px; border-radius: 2px; }
+.send { position: absolute; right: 36px; top: 36px; width: 76px; height: 76px; border-radius: 50%; background: #ececef; color: var(--ink); display: grid; place-items: center; font-size: 40px; font-weight: 700; }
+.steps { font-size: 36px; line-height: 1.75; white-space: nowrap; color: var(--dink2); }
+.steps .on { color: #ececef; }
+.card { background: var(--muted); border-radius: 26px; padding: 40px 46px; font-family: var(--mono); font-size: 36px; line-height: 1.62; white-space: pre; color: var(--ink); }
+.dark .card { background: var(--dcard); color: #ececef; }
+.card .lab { color: var(--ink3); } .dark .card .lab { color: var(--dink3); }
+.col { font-family: var(--mono); font-size: 34px; line-height: 1.02; white-space: pre; text-align: center; }
+.row { font-family: var(--mono); font-size: 40px; white-space: pre; }
+.stamp { font-family: var(--mono); font-weight: 700; font-size: 120px; color: var(--miss-d); border: 10px solid var(--miss-d); border-radius: 22px; padding: 10px 40px 18px; white-space: nowrap; letter-spacing: -0.02em; }
+.badge { font-family: var(--mono); font-weight: 700; font-size: 150px; color: var(--hit); border: 12px solid var(--hit); border-radius: 26px; padding: 8px 54px 22px; white-space: nowrap; }
+.mem { font-family: var(--mono); font-size: 27px; line-height: 1.45; white-space: pre; padding: 16px 24px; border-radius: 16px; background: rgba(124, 232, 214, .06); border: 1px solid rgba(124, 232, 214, .22); color: #e6fffb; }
+.mem .blob { color: var(--walrus); font-size: 22px; }
+.frame { border-radius: 22px; overflow: hidden; background: #fff; box-shadow: 0 50px 100px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08); }
+.frame .bar { height: 46px; background: #ececee; display: flex; align-items: center; gap: 10px; padding: 0 20px; font-family: var(--mono); font-size: 18px; color: #6b6d73; }
+.frame .bar i { width: 13px; height: 13px; border-radius: 50%; background: #d3d4d8; display: block; }
+.frame .url { margin-left: 16px; }
+.frame img { display: block; }
+.tile { border-radius: 26px; padding: 30px 34px; background: var(--dcard); border: 1px solid var(--dline); width: 540px; height: 230px; }
+.tile b { display: block; font-size: 92px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; color: #fff; }
+.tile span { display: block; font-size: 25px; color: var(--dink2); margin-top: 14px; font-weight: 500; line-height: 1.3; }
+.tile em { font-style: normal; font-family: var(--mono); font-size: 17px; color: var(--dink3); display: block; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script src="/film.js"></script>
+</body>
+</html>
