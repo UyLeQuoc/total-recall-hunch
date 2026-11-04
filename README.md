@@ -17,16 +17,16 @@
 <p align="center">
   <b>Say it, Hunch tests it, Sui proves it, Walrus Memory learns who to trust.</b><br />
   <a href="https://testyourhunch.vercel.app">Live app</a> ·
-  <a href="https://github.com/UyLeQuoc/total-recall-hunch/releases/download/showreel-2026-11-04/hunch-showreel.mp4">Watch the 2-minute film</a> ·
+  <a href="https://youtu.be/gHsQ5GAh2VE">Watch the 2-minute film</a> ·
   <a href="docs/prd.md">PRD</a> ·
   <a href="docs/adr/README.md">Decisions</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/UyLeQuoc/total-recall-hunch/releases/download/showreel-2026-11-04/hunch-showreel.mp4">
+  <a href="https://youtu.be/gHsQ5GAh2VE">
     <img src="docs/media/showreel.gif" alt="Eight seconds of the Hunch showreel: the ASCII title, tonight's board, the Walrus Memory globe, Proven" width="100%" />
   </a>
-  <br /><sub>Eight seconds of the showreel. Click for the full 2-minute film (1080p60, sound on).</sub>
+  <br /><sub>Eight seconds of the showreel. Click for the full 2-minute film on YouTube, or <a href="https://github.com/UyLeQuoc/total-recall-hunch/releases/download/showreel-2026-11-04/hunch-showreel.mp4">download the mp4</a> (1080p60, sound on).</sub>
 </p>
 
 ---
