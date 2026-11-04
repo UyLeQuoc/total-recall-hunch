@@ -29,7 +29,6 @@ no deposits, no wagering, no real money.
 
 1. **Say it.** You type the hunch in plain words. A model compiles it into a typed rule you can read. The
    rule is checked against a schema, and Hunch asks the model again if it slips. For example:
-
    - WHEN an NBA game is 30 minutes from tip-off and the books and Polymarket are at least 1 point apart;
    - THEN pick the books' favourite, at the books' price;
    - AGAINST Polymarket.
@@ -117,12 +116,12 @@ of these numbers are measured from the live app, and they're reported whichever 
 
 **NBA moneylines, after 64 games** (cumulative Brier, lower is better):
 
-| Voice              | Games | Brier  |
-| ------------------ | ----- | ------ |
-| Polymarket         | 63    | 0.1914 |
-| Kalshi             | 64    | 0.1939 |
-| The books (consensus) | 64 | 0.1952 |
-| DraftKings alone   | 15    | 0.1972 |
+| Voice                 | Games | Brier  |
+| --------------------- | ----- | ------ |
+| Polymarket            | 63    | 0.1914 |
+| Kalshi                | 64    | 0.1939 |
+| The books (consensus) | 64    | 0.1952 |
+| DraftKings alone      | 15    | 0.1972 |
 
 So the agent now **leans on Polymarket and away from the books** for NBA moneylines, and it cites the
 memory that says why. That's the opposite of the hunch most people start with: "the books are sharper".
