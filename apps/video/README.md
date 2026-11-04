@@ -10,6 +10,7 @@ bun data.ts                    # measure everything on screen → .build/data.js
 bun shots.ts                   # real screens of testyourhunch.vercel.app → .build/shots
 bun render.ts                  # → out/hunch.mp4
 bun render.ts --stills 20,53   # review frames → .build/stills
+bun banner.ts                  # the README banner → docs/media/banner-{dark,light}.png
 ```
 
 | File               | Job                                                                                              |
@@ -19,6 +20,7 @@ bun render.ts --stills 20,53   # review frames → .build/stills
 | `score.ts`         | The music: A minor at 120 BPM, with sections that follow the picture                             |
 | `sfx.ts`           | Synthesised sound effects, placed by the cues the scenes declare                                 |
 | `render.ts`        | Bundles `film/`, steps time frame by frame in Chromium, encodes, mixes the score and the effects |
+| `banner.ts`        | The README banner, light and dark, drawn by the same ASCII engine into `docs/media`              |
 | `film/main.ts`     | The timeline: 14 acts on 60 bars, block-dissolve and flash cuts, the HUD                         |
 | `film/ascii.ts`    | The character grid: noise, glyph masks, the lit sphere, the cube                                 |
 | `film/scenes-a.ts` | The hunch, wins stick, the title, three prices, tonight's board                                  |
