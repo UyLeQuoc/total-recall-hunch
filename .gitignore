@@ -18,3 +18,7 @@ packages/move/**/build/
 
 # Vercel CLI link
 .vercel/
+
+# The film's measured data, captured screens, frames and output (apps/video)
+apps/video/.build/
+apps/video/out/

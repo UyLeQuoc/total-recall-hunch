@@ -1,0 +1,23 @@
+{
+  "name": "@hunch/video",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "video:data": "bun data.ts",
+    "video:shots": "bun shots.ts",
+    "video:render": "bun render.ts"
+  },
+  "devDependencies": {
+    "@fontsource/geist-mono": "5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "@types/bun": "1.4.3",
+    "@types/node": "^24.0.0",
+    "playwright": "1.64.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}
