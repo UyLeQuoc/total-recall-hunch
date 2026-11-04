@@ -1,9 +1,9 @@
 export const W = 1920;
 export const H = 1080;
 
-/** The music bed: 99.39 BPM, first beat at 10 ms (measured from assets/audio/bed.mp3). */
-export const BEAT = 0.6037;
-export const PHASE = 0.01;
+/** The score: 120 BPM from t = 0 (score.ts). */
+export const BEAT = 0.5;
+export const PHASE = 0;
 export const beatAt = (n: number) => PHASE + n * BEAT;
 export const barAt = (n: number) => beatAt(n * 4);
 

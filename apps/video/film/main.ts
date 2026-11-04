@@ -1,141 +1,113 @@
 import type { FilmData } from "../data.ts";
-import { barAt, cues, ease, h, prog, rng, type Scene, sfx } from "./lib.ts";
-import {
-  noHiding,
-  open,
-  problem,
-  record,
-  replay,
-  rule,
-  sayIt,
-  sources,
-  title,
-} from "./scenes-1.ts";
-import { call, end, hood, learning, memory, montage, proven, scored } from "./scenes-2.ts";
+import { Ascii, cellNoise } from "./ascii.ts";
+import { type Act, INK, PAPER } from "./kit.ts";
+import { barAt, clamp, cues, ease, h, prog, sfx } from "./lib.ts";
+import { aHunch, board, split, title, winsStick } from "./scenes-a.ts";
+import { noHiding, record, replay, sayIt } from "./scenes-b.ts";
+import { end, hood, learn, memory, proven } from "./scenes-c.ts";
 
-type Kind = "flash" | "wipe" | "iris" | "cut";
-interface Cut {
-  kind: Kind;
-  color: string;
-}
-
+type Cut = "dissolve" | "flash" | "none";
 const stage = document.getElementById("stage") as HTMLElement;
-const plan: Array<[(s: HTMLElement, a: number, b: number) => Scene, number, Cut]> = [
-  [open, 3, { kind: "flash", color: "#ffffff" }],
-  [problem, 3, { kind: "wipe", color: "#141416" }],
-  [title, 3, { kind: "flash", color: "#ffffff" }],
-  [sources, 3, { kind: "wipe", color: "#141416" }],
-  [sayIt, 4, { kind: "flash", color: "#ffffff" }],
-  [rule, 3, { kind: "iris", color: "" }],
-  [replay, 4, { kind: "flash", color: "#ffffff" }],
-  [record, 4, { kind: "wipe", color: "#141416" }],
-  [noHiding, 3, { kind: "flash", color: "#ffffff" }],
-  [scored, 3, { kind: "wipe", color: "#141416" }],
-  [memory, 4, { kind: "flash", color: "#7ce8d6" }],
-  [call, 3, { kind: "iris", color: "" }],
-  [learning, 4, { kind: "flash", color: "#ffffff" }],
-  [proven, 2, { kind: "wipe", color: "#141416" }],
-  [montage, 3, { kind: "flash", color: "#ffffff" }],
-  [hood, 3, { kind: "flash", color: "#ffffff" }],
-  [end, 3, { kind: "cut", color: "" }],
+const plan: Array<[(p: HTMLElement, a: number, b: number) => Act, number, Cut]> = [
+  [aHunch, 4, "dissolve"],
+  [winsStick, 4, "dissolve"],
+  [title, 4, "flash"],
+  [split, 4, "dissolve"],
+  [board, 4, "dissolve"],
+  [sayIt, 4, "dissolve"],
+  [replay, 4, "dissolve"],
+  [record, 4, "dissolve"],
+  [noHiding, 4, "dissolve"],
+  [memory, 6, "flash"],
+  [learn, 6, "dissolve"],
+  [proven, 2, "dissolve"],
+  [hood, 5, "dissolve"],
+  [end, 5, "none"],
 ];
 
-const scenes: Scene[] = [];
-const cuts: Array<Cut & { at: number }> = [];
+const acts: Act[] = [];
+const cuts: Array<{ at: number; kind: Cut; to: string; seed: number }> = [];
 let bars = 0;
 for (const [make, length, cut] of plan) {
   const start = barAt(bars);
   bars += length;
-  const stop = barAt(bars);
-  const sc = make(stage, start, stop);
-  sc.root.style.zIndex = String(scenes.length + 1);
-  scenes.push(sc);
-  cuts.push({ ...cut, at: stop });
-  if (cut.kind === "flash") sfx(stop - 0.08, "whoosh", 0.45);
-  if (cut.kind === "wipe") sfx(stop - 0.2, "swish", 0.7);
-  if (cut.kind === "iris") sfx(stop, "swish", 0.5);
+  const a = make(stage, start, barAt(bars));
+  a.root.style.zIndex = String(acts.length + 1);
+  acts.push(a);
+  cuts.push({ at: barAt(bars), kind: cut, to: "", seed: acts.length });
 }
+cuts.forEach((c, i) => {
+  const next = acts[i + 1];
+  c.to = next ? (next.bg === "ink" ? INK : PAPER) : INK;
+  if (c.kind === "dissolve") sfx(c.at - 0.25, "swish", 0.35);
+});
 const DURATION = barAt(bars);
-sfx(barAt(6) - 2.2, "riser", 0.35);
-sfx(barAt(37) - 2.2, "riser", 0.35);
 
-const wipe = h("div", "wipe", stage);
+const overlay = new Ascii(stage, 24, 40);
+overlay.el.classList.add("overlay");
 const flash = h("div", "flash", stage);
-const grain = h("div", "grain", stage);
-h("div", "vignette", stage);
+const hud = h("div", "hud", stage);
+const hudTL = h("div", "tl", hud);
+const hudTR = h("div", "tr", hud);
+const hudBL = h("div", "bl", hud);
+const hudBR = h("div", "br", hud);
+for (const k of ["k1", "k2", "k3", "k4"]) h("i", k, hud);
+hudTL.textContent = "hunch — showreel";
+hudBR.textContent = "walrus × tatum · total recall";
 
-function noise(): string {
-  const c = document.createElement("canvas");
-  c.width = 256;
-  c.height = 256;
-  const ctx = c.getContext("2d");
-  if (!ctx) return "";
-  const img = ctx.createImageData(256, 256);
-  const r = rng(99);
-  for (let i = 0; i < img.data.length; i += 4) {
-    const v = Math.floor(r() * 255);
-    img.data[i] = v;
-    img.data[i + 1] = v;
-    img.data[i + 2] = v;
-    img.data[i + 3] = 255;
-  }
-  ctx.putImageData(img, 0, 0);
-  return c.toDataURL();
-}
-grain.style.backgroundImage = `url(${noise()})`;
+const tc = (t: number) => {
+  const f = Math.floor((t % 1) * 60);
+  const sec = Math.floor(t);
+  return `00:${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}:${String(f).padStart(2, "0")}`;
+};
 
-const IRIS = 0.65;
-
+const D = 0.3;
 function render(t: number): void {
-  scenes.forEach((sc, i) => {
-    const before = i > 0 ? cuts[i - 1] : undefined;
-    const after = cuts[i];
-    const lingers = after?.kind === "iris" ? IRIS : 0;
-    const visible = t >= sc.start && t < sc.end + lingers;
-    sc.root.style.display = visible ? "" : "none";
-    sc.root.style.clipPath = "";
-    if (!visible) return;
-    if (before?.kind === "iris" && t < sc.start + IRIS) {
-      const r = ease.inOutCubic(prog(t, sc.start, IRIS)) * 2300;
-      sc.root.style.clipPath = `circle(${r.toFixed(1)}px at 960px 540px)`;
+  let current = acts[0];
+  for (const a of acts) {
+    const on = t >= a.start && t < a.end;
+    a.root.style.display = on ? "" : "none";
+    if (on) {
+      current = a;
+      a.render(t);
     }
-    sc.render(t);
-  });
-
+  }
+  overlay.clear();
   let fo = 0;
-  let fc = "#fff";
-  let wx = 2400;
-  let wc = "#000";
+  let fc = PAPER;
   for (const c of cuts) {
-    if (c.kind === "flash" && t > c.at - 0.25 && t < c.at + 0.6) {
-      fo =
-        t < c.at ? ease.inCubic(prog(t, c.at - 0.25, 0.25)) : 1 - ease.outCubic(prog(t, c.at, 0.6));
-      fc = c.color;
+    if (c.kind === "dissolve" && t > c.at - D && t < c.at + D) {
+      const p = (t - (c.at - D)) / (2 * D);
+      const k = p < 0.5 ? p * 2 : (1 - p) * 2;
+      const dir = c.seed % 3;
+      overlay.blocks((i, j) => {
+        const sweep =
+          dir === 0
+            ? i / overlay.cols
+            : dir === 1
+              ? j / overlay.rows
+              : (i / overlay.cols + j / overlay.rows) / 2;
+        const n = cellNoise(i, j, c.seed) * 0.55 + sweep * 0.45;
+        return clamp((k * 1.7 - n) * 5);
+      }, c.to);
     }
-    if (c.kind === "wipe" && t > c.at - 0.35 && t < c.at + 0.4) {
-      wx =
-        t < c.at
-          ? (1 - ease.inCubic(prog(t, c.at - 0.35, 0.35))) * 2400
-          : -ease.outCubic(prog(t, c.at, 0.4)) * 2600;
-      wc = c.color;
+    if (c.kind === "flash" && t > c.at - 0.12 && t < c.at + 0.9) {
+      fo = t < c.at ? prog(t, c.at - 0.12, 0.12) : 1 - ease.outCubic(prog(t, c.at, 0.9));
+      fc = c.to === INK ? PAPER : "#ffffff";
     }
   }
   flash.style.background = fc;
   flash.style.opacity = fo.toFixed(3);
-  wipe.style.background = wc;
-  wipe.style.display = wx > 2300 || wx < -2500 ? "none" : "";
-  wipe.style.transform = `translateX(${wx.toFixed(1)}px) skewX(-14deg) scaleX(1.4)`;
-  const dark =
-    scenes.find((sc) => t >= sc.start && t < sc.end)?.root.classList.contains("dark") ?? false;
-  grain.classList.toggle("on-dark", dark);
-  const f = Math.floor(t * 24);
-  grain.style.backgroundPosition = `${(f * 73) % 256}px ${(f * 151) % 256}px`;
+  const idx = current ? acts.indexOf(current) : 0;
+  const dark = current?.bg === "ink";
+  hud.classList.toggle("on-ink", dark);
+  hud.style.opacity = String(clamp(prog(t, 0.8, 0.8)) * (1 - prog(t, DURATION - 3.6, 1.2)));
+  hudTR.textContent = `${String(idx + 1).padStart(2, "0")} / ${String(acts.length).padStart(2, "0")}  ${current?.label ?? ""}`;
+  hudBL.textContent = `${tc(t)}  ·  ${String(Math.floor(t / 2) + 1).padStart(2, "0")}/60`;
 }
 
 async function ready(): Promise<void> {
-  const loads = ["400", "500", "600", "700", "800", "900"].map((w) =>
-    document.fonts.load(`${w} 40px "Inter"`),
-  );
+  const loads = ["400", "500", "600", "700"].map((w) => document.fonts.load(`${w} 40px "Inter"`));
   const mono = ["400", "500", "700"].map((w) => document.fonts.load(`${w} 40px "Geist Mono"`));
   await Promise.all([...loads, ...mono]);
   await document.fonts.ready;

@@ -1,4 +1,4 @@
-# ADR-0019: The record can't be changed by a double click, an Undo or a retry
+# ADR-0020: The record can't be changed by a double click, an Undo or a retry
 
 1. **Status:** Proposed
 2. **Date:** 2026-11-04

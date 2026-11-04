@@ -1,155 +1,131 @@
 import type { FilmData } from "../data.ts";
-import { clamp, ease, h, lerp, pose, prog, pulse, type Scene, sfx, split, spring } from "./lib.ts";
+import { Ascii, GLYPHS } from "./ascii.ts";
+import { clamp, ease, h, pose, prog, rng, type Scene } from "./lib.ts";
 
-export type Bg = "dark" | "light";
-const BG: Record<Bg, string> = { dark: "#141416", light: "#f7f7f7" };
-const GLOWS: Record<Bg, Array<[string, number, number, number]>> = {
-  dark: [
-    ["#22252e", 1500, 260, 760],
-    ["#1d2a26", 320, 920, 640],
-  ],
-  light: [
-    ["#ffffff", 300, 200, 760],
-    ["#e9ebee", 1650, 900, 820],
-  ],
-};
+export type Bg = "ink" | "paper";
+export const INK = "#141416";
+export const PAPER = "#f7f7f7";
+export const FG: Record<Bg, string> = { ink: "#ececef", paper: "#141416" };
+export const DIM: Record<Bg, string> = { ink: "#3a3c43", paper: "#cfd1d5" };
+export const MUTED: Record<Bg, string> = { ink: "#7d8088", paper: "#8e9097" };
+export const HIT: Record<Bg, string> = { ink: "#5fd39a", paper: "#2f8a5b" };
+export const MISS: Record<Bg, string> = { ink: "#ff7a6e", paper: "#c4483e" };
+export const SUI = "#4da2ff";
 
 export const data = (): FilmData => window.DATA;
 
 export interface Stage {
   root: HTMLElement;
   cam: HTMLElement;
+  bg: Bg;
+  ascii(cw?: number, ch?: number): Ascii;
 }
 
-export function scene(
-  name: string,
+export interface Act extends Scene {
+  bg: Bg;
+  label: string;
+}
+
+export function act(
+  label: string,
   parent: HTMLElement,
   start: number,
   end: number,
   bg: Bg,
-  build: (st: Stage) => (t: number) => void,
-): Scene {
-  const root = h("div", "scene", parent);
-  root.style.background = BG[bg];
-  root.style.color = bg === "light" ? "#141416" : "#ececef";
-  if (bg === "dark") root.classList.add("dark");
+  build: (st: Stage) => (t: number, u: number) => void,
+): Act {
+  const root = h("div", `scene ${bg}`, parent);
   const cam = h("div", "cam", root);
-  const glows = GLOWS[bg].map(([color, x, y, size], i) => {
-    const g = h("div", "glow c", cam);
-    g.style.background = color;
-    g.style.width = `${size}px`;
-    g.style.height = `${size}px`;
-    return { g, x, y, i };
-  });
-  h("div", "dots-bg", cam);
-  const draw = build({ root, cam });
-  return {
-    name,
-    start,
-    end,
+  const st: Stage = {
     root,
-    render(t) {
-      for (const { g, x, y, i } of glows)
-        pose(g, {
-          x: x + Math.sin(t * 0.4 + i) * 50,
-          y: y + Math.cos(t * 0.3 + i * 2) * 40,
-          o: bg === "light" ? 0.7 : 0.6,
-        });
-      draw(t);
-    },
+    cam,
+    bg,
+    ascii: (cw = 12, ch = 22) => new Ascii(cam, cw, ch),
   };
+  const draw = build(st);
+  return { name: label, label, bg, start, end, root, render: (t) => draw(t, t - start) };
 }
 
 export function camera(
   st: Stage,
-  t: number,
-  from: number,
-  o: {
-    push?: number;
-    diveAt?: number;
-    diveEnd?: number;
-    diveTo?: [number, number];
-    diveScale?: number;
-  } = {},
+  o: { s?: number; x?: number; y?: number; r?: number; rx?: number; ry?: number },
 ): void {
-  const push = 1 + (t - from) * (o.push ?? 0.012);
-  let z = 0;
-  if (o.diveAt !== undefined && o.diveEnd !== undefined)
-    z = ease.inExpo(prog(t, o.diveAt, o.diveEnd - o.diveAt));
-  const [x, y] = o.diveTo ?? [960, 540];
-  st.cam.style.transformOrigin = `${x}px ${y}px`;
-  st.cam.style.transform = `scale(${(push * (1 + z * (o.diveScale ?? 14))).toFixed(4)})`;
-  st.cam.style.filter = z > 0.02 ? `blur(${(z * 6).toFixed(2)}px)` : "";
+  const parts = [
+    `translate3d(${(o.x ?? 0).toFixed(1)}px, ${(o.y ?? 0).toFixed(1)}px, 0)`,
+    `rotateX(${(o.rx ?? 0).toFixed(2)}deg)`,
+    `rotateY(${(o.ry ?? 0).toFixed(2)}deg)`,
+    `rotate(${(o.r ?? 0).toFixed(2)}deg)`,
+    `scale(${(o.s ?? 1).toFixed(4)})`,
+  ];
+  st.cam.style.transform = parts.join(" ");
 }
 
-export function bigType(
-  parent: HTMLElement,
-  text: string,
-  o: { size: number; color?: string; weight?: number; by?: "chars" | "words"; mono?: boolean },
-) {
-  const el = h("div", "c", parent);
-  el.style.cssText += `font-size:${o.size}px;font-weight:${o.weight ?? 800};letter-spacing:${o.mono ? "-0.02em" : "-0.055em"};line-height:.95;white-space:nowrap;${o.color ? `color:${o.color};` : ""}`;
-  if (o.mono) el.style.fontFamily = "var(--mono)";
-  const pieces = split(el, text, o.by ?? "chars").filter((p) => p.classList.contains("piece"));
-  return {
-    el,
-    pieces,
-    render(t: number, at: number, stagger = 0.04, drop = 0.55) {
-      pieces.forEach((p, i) => {
-        const k = prog(t, at + i * stagger, 0.5);
-        p.style.transform = `translateY(${((1 - ease.outBack(k, 2)) * o.size * drop).toFixed(1)}px) rotate(${((1 - ease.outCubic(k)) * (i % 2 ? 6 : -6)).toFixed(1)}deg)`;
-        p.style.opacity = String(clamp(k * 3));
-        p.style.filter = k < 1 ? `blur(${((1 - k) * 10).toFixed(1)}px)` : "";
-      });
-    },
-  };
+export function el(parent: HTMLElement, cls: string, text = "", css = ""): HTMLElement {
+  const e = h("div", `c ${cls}`, parent);
+  e.textContent = text;
+  if (css) e.style.cssText += css;
+  return e;
 }
 
-export function typeSounds(
-  at: number,
-  count: number,
-  stagger: number,
-  every = 3,
-  gain = 0.32,
+/** `text` resolving out of glyph noise from left to right as p goes 0 → 1. */
+export function decode(text: string, p: number, seed = 1, spread = 0.35): string {
+  if (p <= 0) return "";
+  const r = rng(seed * 977 + Math.floor(p * 30));
+  const chars = Array.from(text);
+  return chars
+    .map((c, i) => {
+      if (c === " ") return " ";
+      const at = (i / Math.max(1, chars.length)) * (1 - spread);
+      if (p >= at + spread) return c;
+      if (p < at) return p > 0 ? " " : "";
+      return GLYPHS[Math.floor(r() * GLYPHS.length)] ?? "#";
+    })
+    .join("");
+}
+
+export const visible = (t: number, a: number, b = Infinity) => t >= a && t < b;
+export const fin = (t: number, a: number, d = 0.35) => ease.outExpo(prog(t, a, d));
+export const fout = (t: number, a: number, d = 0.3) => 1 - ease.inCubic(prog(t, a, d));
+
+export function place(
+  e: HTMLElement,
+  x: number,
+  y: number,
+  o = 1,
+  extra: { s?: number; r?: number; center?: boolean } = {},
 ): void {
-  for (let i = 0; i < count; i += every) sfx(at + i * stagger, "pop", gain);
+  pose(e, { x, y, o, s: extra.s ?? 1, r: extra.r ?? 0, center: extra.center ?? true });
 }
 
-export function keySounds(at: number, chars: number, seconds: number, gain = 0.5): void {
-  const n = Math.max(1, Math.floor(chars / 3));
-  for (let i = 0; i < n; i++) sfx(at + (i * seconds) / n, "type", gain);
-}
-
-export function slam(t: number, at: number, from = 2.6): number {
-  if (t < at) return 0;
-  const sp = spring(t, at, 2.6, 9);
-  return lerp(from, 1, Math.min(1, sp)) + (sp > 1 ? (sp - 1) * 0.5 : 0);
-}
-
-export function shake(t: number, at: number, amount = 16): [number, number] {
-  const p = pulse(t, at, 9) * amount;
-  return [Math.sin(t * 53) * p, Math.cos(t * 41) * p];
-}
-
-export const popIn = (t: number, at: number) => (t < at ? 0 : spring(t, at, 2.3, 8));
-export const fadeIn = (t: number, at: number, dur = 0.4) => ease.outExpo(prog(t, at, dur));
-export const fadeOut = (t: number, at: number, dur = 0.4) => 1 - ease.inCubic(prog(t, at, dur));
-
-export function kicker(parent: HTMLElement, text: string): HTMLElement {
-  return h("div", "kicker c", parent, text);
-}
-
-export function text(parent: HTMLElement, cls: string, value: string, css = ""): HTMLElement {
-  const el = h("div", `c ${cls}`, parent);
-  el.textContent = value;
-  if (css) el.style.cssText += css;
-  return el;
-}
-
-export function bar(frac: number, width: number): string {
+export function bar(frac: number, width: number, full = "█", empty = "·"): string {
   const n = Math.round(clamp(frac) * width);
-  return "█".repeat(n) + "░".repeat(Math.max(0, width - n));
+  return full.repeat(n) + empty.repeat(Math.max(0, width - n));
 }
 
-export const short = (s: string, head = 10) => (s.length > head + 2 ? `${s.slice(0, head)}…` : s);
+const SPARK = "▁▂▃▄▅▆▇█";
+export function spark(series: number[], p = 1): string {
+  const lo = Math.min(...series);
+  const hi = Math.max(...series);
+  const n = Math.round(series.length * clamp(p));
+  return series
+    .slice(0, n)
+    .map((v) => SPARK[Math.round(((v - lo) / (hi - lo || 1)) * (SPARK.length - 1))] ?? "▁")
+    .join("");
+}
+
+const SPIN = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
+export const spinner = (t: number) => SPIN[Math.floor(t * 12) % SPIN.length] ?? "·";
+
+export function wrap(parts: string[], max: number): string[] {
+  const out: string[] = [];
+  for (const part of parts) {
+    const last = out.at(-1);
+    if (last !== undefined && last.length + part.length + 3 <= max)
+      out[out.length - 1] = `${last} · ${part}`;
+    else out.push(part);
+  }
+  return out;
+}
+
 export const pct = (p: number) => `${(p * 100).toFixed(1)}%`;
+export const short = (s: string, n = 12) => (s.length > n + 1 ? `${s.slice(0, n)}…` : s);
