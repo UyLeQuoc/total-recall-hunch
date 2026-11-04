@@ -7,3 +7,5 @@
 | [tech-reference.md](tech-reference.md) | Walrus Memory, Tatum and Sui: APIs, endpoints, and what the relayer and the gateway actually do                              |
 | [code-rules.md](code-rules.md)         | How code is written here. It outranks habit and nearby files                                                                 |
 | [event-rules.md](event-rules.md)       | The hackathon's rules, Track 1, judging, prizes and the submission form                                                      |
+| [submission.md](submission.md)         | The submission form, field by field, with the answers ready to paste                                                         |
+| [blog.md](blog.md)                     | The blog post: what Hunch does, how it uses Tatum and Walrus Memory, and how it learned over time                            |
